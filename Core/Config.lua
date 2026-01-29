@@ -3,14 +3,11 @@ local BS = _G.BS or {}
 _G.BS = BS
 BS.modules = BS.modules or {}
 
--- Optional font registry (fallback if no LibSharedMedia)
 BS.Fonts = BS.Fonts or {}
 
--- NO require() en WoW
 local DB = BS.DB
 local UI = BS.UI
 
--- Hard fail con mensaje claro si el .toc está mal ordenado
 if not DB or not UI then
     error("BS: Missing Core/DB.lua or Core/UI.lua. Check .toc load order (DB.lua, UI.lua, then Config.lua).")
 end
@@ -65,10 +62,6 @@ local function GetAvailableFonts()
         end
     end
 
-    -- 2) Internal registry (dynamic if your modules register fonts)
-    -- Support both array and map forms:
-    --   BS.Fonts = { {label=..., path=...}, ... }
-    --   BS.Fonts = { ["My Font"]="Interface\\AddOns\\...\\my.ttf", ... }
     do
         local reg = BS.Fonts
         if type(reg) == "table" then
@@ -138,7 +131,6 @@ local function SetDropdownSelectionByValue(dd, value, items)
     end
 
     if not display then
-        -- fallback: show the value itself (short)
         if type(value) == "string" and value ~= "" then
             display = value:gsub(".*\\", "")
         else
@@ -163,7 +155,7 @@ local function ApplyModuleFont(module)
 
     local size = tonumber(module.db.fontSize) or 20
     local font = NormalizeFontPath(module.db.font) or "Fonts\\FRIZQT__.TTF"
-    local flags = module.db.fontFlags or "OUTLINE" -- optional future-proof
+    local flags = module.db.fontFlags or "OUTLINE"
 
     module.text:SetFont(font, size, flags)
 end
@@ -602,7 +594,7 @@ local function BuildUI()
     f:SetBackdropBorderColor(0, 0, 0, 1)
 
     -- Title
-    local title = UI:CreateText(f, "Xai UI", "TOPLEFT", f, "TOPLEFT", 18, -14, "GameFontNormalLarge")
+    local title = UI:CreateText(f, "BlackSignal", "TOPLEFT", f, "TOPLEFT", 18, -14, "GameFontNormalLarge")
     title:SetTextColor(1, 1, 1, 1)
 
     -- Close
