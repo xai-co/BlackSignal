@@ -690,9 +690,9 @@ end
 -------------------------------------------------
 -- Slash command
 -------------------------------------------------
-SLASH_XUI1 = "/xui"
+SLASH_BS1 = "/bs"
 ---@diagnostic disable-next-line: duplicate-set-field
-SlashCmdList["XUI"] = function(msg)
+SlashCmdList["BS"] = function(msg)
     msg = (msg or ""):match("^%s*(.-)%s*$") -- trim
 
     -- Sin args -> abre/cierra config
@@ -721,7 +721,7 @@ SlashCmdList["XUI"] = function(msg)
         return
     end
 
-    print("|cffb048f8BS:|r Comandos: /xui (config), /xui aq [toggle|on|off]")
+    print("|cffb048f8BS:|r Comandos: /bs (config), /bs aq [toggle|on|off]")
 end
 
 -------------------------------------------------
