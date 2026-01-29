@@ -1,4 +1,4 @@
--- Core/Config.lua
+ -- Core/Config.lua
 local BS = _G.BS or {}
 _G.BS = BS
 BS.modules = BS.modules or {}
@@ -636,9 +636,31 @@ local function BuildUI()
     f:SetBackdropColor(0, 0, 0, 0.75)
     f:SetBackdropBorderColor(0, 0, 0, 1)
 
-    -- Title
-    local title = UI:CreateText(f, "BlackSignal", "TOPLEFT", f, "TOPLEFT", 18, -14, "GameFontNormalLarge")
+-- Title + Icon 
+    local function GetAddonMeta(addonName, field)
+        if C_AddOns and C_AddOns.GetAddOnMetadata then
+            return C_AddOns.GetAddOnMetadata(addonName, field)
+        end
+        if _G.GetAddOnMetadata then
+            return _G.GetAddOnMetadata(addonName, field)
+        end
+        return nil
+    end
+
+    local iconPath = GetAddonMeta("BlackSignal", "IconTexture")
+    if not iconPath or iconPath == "" then
+        iconPath = "Interface\\AddOns\\BlackSignal\\Media\\icon.tga"
+    end
+
+    local icon = f:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(32, 32)
+    icon:SetTexture(iconPath)
+    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    icon:SetPoint("TOPLEFT", f, "TOPLEFT", 18, -14)
+
+    local title = UI:CreateText(f, "BlackSignal", "LEFT", icon, "RIGHT", 6, 0, "GameFontNormalLarge")
     title:SetTextColor(1, 1, 1, 1)
+
 
     -- Close
     local close = CreateFrame("Button", nil, f)
@@ -654,7 +676,7 @@ local function BuildUI()
 
     -- Left panel
     local left = CreateFrame("Frame", nil, f, "BackdropTemplate")
-    left:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -46)
+    left:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -58)
     left:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 14)
     left:SetWidth(LEFT_W)
     UI:ApplyPanelStyle(left, 0.20, 1)
