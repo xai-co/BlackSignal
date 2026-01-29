@@ -646,7 +646,7 @@ local function BuildUI()
     icon:SetPoint("TOPLEFT", f, "TOPLEFT", 18, -14)
 
     local title = UI:CreateText(f, "BlackSignal", "LEFT", icon, "RIGHT", 6, 0, "GameFontNormalLarge")
-    title:SetTextColor(127, 63, 191, 1)
+    title:SetTextColor(1, 1, 1, 1)
 
     -- Close
     local close = CreateFrame("Button", nil, f)
