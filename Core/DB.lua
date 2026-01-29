@@ -266,7 +266,7 @@ local function CreateModuleContent(parent, module)
             Sync()
         end)
 
-        check._xaiSync = Sync
+        check._bsSync = Sync
         Sync()
     end
 
@@ -297,7 +297,7 @@ local function CreateModuleContent(parent, module)
 
     enable:SetScript("OnClick", function(self)
         SetModuleEnabled(module, self:GetChecked())
-        if self._xaiSync then self._xaiSync() end
+        if self._bsSync then self._bsSync() end
     end)
 
     -------------------------------------------------
@@ -543,7 +543,7 @@ local function BuildUI()
     f:SetBackdropColor(0, 0, 0, 0.75)
     f:SetBackdropBorderColor(0, 0, 0, 1)
 
-    local title = CreateText(f, "Xai UI", "TOPLEFT", f, "TOPLEFT", 18, -14, "GameFontNormalLarge")
+    local title = CreateText(f, "BS UI", "TOPLEFT", f, "TOPLEFT", 18, -14, "GameFontNormalLarge")
     title:SetTextColor(1, 1, 1, 1)
 
     local close = CreateFrame("Button", nil, f)
@@ -606,29 +606,29 @@ local function BuildUI()
             fs:SetTextColor(1, 1, 1, 1)
         end
 
-        btn._xai = btn._xai or {}
-        btn._xai.bgA = bgA
-        btn._xai.hoverA = hoverA
-        btn._xai.activeA = activeA
+        btn._bs = btn._bs or {}
+        btn._bs.bgA = bgA
+        btn._bs.hoverA = hoverA
+        btn._bs.activeA = activeA
 
         btn:SetScript("OnEnter", function(self)
-            if not self._xaiActive then
-                self:SetBackdropColor(0, 0, 0, self._xai.hoverA)
+            if not self._bsActive then
+                self:SetBackdropColor(0, 0, 0, self._bs.hoverA)
             end
         end)
 
         btn:SetScript("OnLeave", function(self)
-            if not self._xaiActive then
-                self:SetBackdropColor(0, 0, 0, self._xai.bgA)
+            if not self._bsActive then
+                self:SetBackdropColor(0, 0, 0, self._bs.bgA)
             end
         end)
 
-        function btn:SetXaiActive(active)
-            self._xaiActive = active and true or false
-            if self._xaiActive then
-                self:SetBackdropColor(0, 0, 0, self._xai.activeA)
+        function btn:SetBSActive(active)
+            self._bsActive = active and true or false
+            if self._bsActive then
+                self:SetBackdropColor(0, 0, 0, self._bs.activeA)
             else
-                self:SetBackdropColor(0, 0, 0, self._xai.bgA)
+                self:SetBackdropColor(0, 0, 0, self._bs.bgA)
             end
         end
     end
@@ -659,8 +659,8 @@ local function BuildUI()
 
     local function SetActiveButton(activeName)
         for name, b in pairs(Config.moduleButtons) do
-            if b and b.SetXaiActive then
-                b:SetXaiActive(name == activeName)
+            if b and b.SetBSActive then
+                b:SetBSActive(name == activeName)
             end
         end
     end

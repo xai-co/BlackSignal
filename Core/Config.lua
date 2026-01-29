@@ -248,7 +248,7 @@ local function CreateModuleContent(parent, module)
 
     enable:SetScript("OnClick", function(self)
         SetModuleEnabled(module, self:GetChecked())
-        if self._xaiSync then self._xaiSync() end
+        if self._bsSync then self._bsSync() end
     end)
 
     -- X / Y
@@ -339,7 +339,7 @@ local function CreateModuleContent(parent, module)
         cb:SetScript("OnClick", function(self)
             module.db.showOnlyBuffICanApply = self:GetChecked() and true or false
             ApplyModuleExtra(module)
-            if self._xaiSync then self._xaiSync() end
+            if self._bsSync then self._bsSync() end
         end)
         lastAnchor = cb
     end
@@ -351,7 +351,7 @@ local function CreateModuleContent(parent, module)
         cb:SetScript("OnClick", function(self)
             module.db.iconsOnly = self:GetChecked() and true or false
             ApplyModuleExtra(module)
-            if self._xaiSync then self._xaiSync() end
+            if self._bsSync then self._bsSync() end
         end)
         lastAnchor = cb
     end
@@ -410,7 +410,7 @@ local function CreateModuleContent(parent, module)
         cb:SetScript("OnClick", function(self)
             module.db.showWhenSolo = self:GetChecked() and true or false
             ApplyModuleExtra(module)
-            if self._xaiSync then self._xaiSync() end
+            if self._bsSync then self._bsSync() end
         end)
         lastAnchor = cb
     end
@@ -437,7 +437,7 @@ local function CreateModuleContent(parent, module)
         cb:SetScript("OnClick", function(self)
             module.db.onlyShowIfKickReady = self:GetChecked() and true or false
             ApplyModuleExtra(module)
-            if self._xaiSync then self._xaiSync() end
+            if self._bsSync then self._bsSync() end
         end)
         lastAnchor = cb
     end
@@ -469,7 +469,7 @@ local function CreateModuleContent(parent, module)
         cb:SetScript("OnClick", function(self)
             module.db.debugAlwaysShow = self:GetChecked() and true or false
             ApplyModuleExtra(module)
-            if self._xaiSync then self._xaiSync() end
+            if self._bsSync then self._bsSync() end
         end)
         lastAnchor = cb
     end
@@ -512,7 +512,7 @@ local function CreateModuleContent(parent, module)
         SetDropdownSelectionByValue(fontDD, module.db.font, fonts)
 
         enable:SetChecked(module.enabled)
-        if enable._xaiSync then enable._xaiSync() end
+        if enable._bsSync then enable._bsSync() end
 
         if module.frame then module.frame:SetShown(module.enabled) end
 
@@ -558,8 +558,8 @@ end
 
 local function SetActiveButton(activeName)
     for name, b in pairs(Config.moduleButtons) do
-        if b and b.SetXaiActive then
-            b:SetXaiActive(name == activeName)
+        if b and b.SetBSActive then
+            b:SetBSActive(name == activeName)
         end
     end
 end

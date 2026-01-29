@@ -100,29 +100,29 @@ function UI:ApplyNavButtonStyle(btn, opts)
         fs:SetTextColor(1, 1, 1, 1)
     end
 
-    btn._xai = btn._xai or {}
-    btn._xai.bgA = bgA
-    btn._xai.hoverA = hoverA
-    btn._xai.activeA = activeA
+    btn._bs = btn._bs or {}
+    btn._bs.bgA = bgA
+    btn._bs.hoverA = hoverA
+    btn._bs.activeA = activeA
 
     btn:SetScript("OnEnter", function(self)
-        if not self._xaiActive then
-            self:SetBackdropColor(0, 0, 0, self._xai.hoverA)
+        if not self._bsActive then
+            self:SetBackdropColor(0, 0, 0, self._bs.hoverA)
         end
     end)
 
     btn:SetScript("OnLeave", function(self)
-        if not self._xaiActive then
-            self:SetBackdropColor(0, 0, 0, self._xai.bgA)
+        if not self._bsActive then
+            self:SetBackdropColor(0, 0, 0, self._bs.bgA)
         end
     end)
 
-    function btn:SetXaiActive(active)
-        self._xaiActive = active and true or false
-        if self._xaiActive then
-            self:SetBackdropColor(0, 0, 0, self._xai.activeA)
+    function btn:SetBSActive(active)
+        self._bsActive = active and true or false
+        if self._bsActive then
+            self:SetBackdropColor(0, 0, 0, self._bs.activeA)
         else
-            self:SetBackdropColor(0, 0, 0, self._xai.bgA)
+            self:SetBackdropColor(0, 0, 0, self._bs.bgA)
         end
     end
 end
@@ -207,7 +207,7 @@ function UI:ApplyMinimalCheckStyle(check)
         Sync()
     end)
 
-    check._xaiSync = Sync
+    check._bsSync = Sync
     Sync()
 end
 
