@@ -14,7 +14,7 @@ Core/Ticker.lua
 Core/Events.lua
 Core/DB.lua
 Core/UI.lua
-Core/Config.lua
+Config/Config.lua
 
 
 Modules/Shimmer.lua
