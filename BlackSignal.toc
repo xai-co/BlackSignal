@@ -1,9 +1,9 @@
-## Title: Black Signal
+## Title: |cff7f3fbfBlack Signal|r
 ## Notes: User Quality of Life Improvements
 ## Author: Xaico, Gwydeon
 ## Version: 1.0
 ## Interface: 120000, 120001
-## IconTexture: Interface/AddOns/BlackSignal/Shared/icon
+## IconTexture: Interface/AddOns/BlackSignal/Media/icon
 ## SavedVariables: BlackSignal_DB
 
 
