@@ -38,12 +38,7 @@ local function EnsureDB()
   for k, v in pairs(defaults) do
     if mdb[k] == nil then mdb[k] = v end
   end
-
-  -- cleanup old fields if they existed
-  mdb.showMinimap = nil
-  mdb.minimapAngle = nil
-  mdb.minimapSize = nil
-
+  
   return mdb
 end
 
