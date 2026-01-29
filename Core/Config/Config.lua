@@ -474,6 +474,42 @@ local function CreateModuleContent(parent, module)
         lastAnchor = cb
     end
 
+    if module.db.colorPicker then
+        local lbl = UI:CreateText(
+            f,
+            "Color:",
+            "TOPLEFT",
+            lastAnchor,
+            "BOTTOMLEFT",
+            0,
+            -14,
+            "GameFontHighlight"
+        )
+
+        local picker = UI:CreateColorPicker(
+            f, 26, 26,
+            "LEFT", lbl, "RIGHT", 10, 0,
+            function()
+                return
+                    module.db.ringColorR or 1,
+                    module.db.ringColorG or 1,
+                    module.db.ringColorB or 1,
+                    module.db.ringAlpha or 1
+            end,
+            function(r, g, b, a)
+                module.db.ringColorR = r
+                module.db.ringColorG = g
+                module.db.ringColorB = b
+                module.db.ringAlpha  = a
+                ApplyModuleExtra(module)
+            end,
+            "Click para cambiar el color"
+        )
+
+        lastAnchor = lbl
+    end
+
+
     -------------------------------------------------
     -- Reset
     -------------------------------------------------
@@ -521,6 +557,13 @@ local function CreateModuleContent(parent, module)
 
         if module.StopTicker then module:StopTicker() end
         if module.StartTicker and module.enabled ~= false then module:StartTicker() end
+
+        if d.colorPicker then
+            module.db.ringColorR = d.ringColorR
+            module.db.ringColorG = d.ringColorG
+            module.db.ringColorB = d.ringColorB
+            module.db.ringAlpha  = d.ringAlpha
+        end
 
         ApplyModuleExtra(module)
     end)

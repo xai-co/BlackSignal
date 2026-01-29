@@ -20,3 +20,4 @@ Core/Config/Config.lua
 Modules/Shimmer.lua
 Modules/FocusCastTracker.lua
 Modules/AutoQueue/AutoQueue.lua
+Modules/MouseRing.lua

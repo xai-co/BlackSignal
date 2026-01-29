@@ -41,6 +41,64 @@ function UI:CreateCheck(parent, label, point, rel, relPoint, x, y)
     return cb
 end
 
+function UI:ShowColorPicker(r, g, b, a, callback)
+    r = tonumber(r) or 1
+    g = tonumber(g) or 1
+    b = tonumber(b) or 1
+    a = tonumber(a) or 1
+
+    local function fire(newR, newG, newB, newA)
+        if callback then callback(newR, newG, newB, newA) end
+    end
+
+    -- Retail API moderno
+    if ColorPickerFrame and ColorPickerFrame.SetupColorPickerAndShow then
+        local info = {
+            r = r, g = g, b = b,
+            opacity = 1 - a,
+            hasOpacity = true,
+            swatchFunc = function()
+                local nr, ng, nb = ColorPickerFrame:GetColorRGB()
+                local na = 1 - (OpacitySliderFrame and OpacitySliderFrame:GetValue() or 0)
+                fire(nr, ng, nb, na)
+            end,
+            opacityFunc = function()
+                local nr, ng, nb = ColorPickerFrame:GetColorRGB()
+                local na = 1 - (OpacitySliderFrame and OpacitySliderFrame:GetValue() or 0)
+                fire(nr, ng, nb, na)
+            end,
+            cancelFunc = function(prev)
+                if prev then
+                    local na = 1 - (prev.opacity or 0)
+                    fire(prev.r, prev.g, prev.b, na)
+                else
+                    fire(r, g, b, a)
+                end
+            end,
+        }
+        ColorPickerFrame:SetupColorPickerAndShow(info)
+        return
+    end
+
+    -- Fallback clásico
+    ColorPickerFrame:SetColorRGB(r, g, b)
+    ColorPickerFrame.hasOpacity = true
+    ColorPickerFrame.opacity = 1 - a
+
+    ColorPickerFrame.func = function()
+        local nr, ng, nb = ColorPickerFrame:GetColorRGB()
+        local na = 1 - (OpacitySliderFrame and OpacitySliderFrame:GetValue() or 0)
+        fire(nr, ng, nb, na)
+    end
+    ColorPickerFrame.opacityFunc = ColorPickerFrame.func
+    ColorPickerFrame.cancelFunc = function()
+        fire(r, g, b, a)
+    end
+
+    ColorPickerFrame:Show()
+end
+
+
 -------------------------------------------------
 -- Panel style
 -------------------------------------------------
@@ -210,5 +268,57 @@ function UI:ApplyMinimalCheckStyle(check)
     check._bsSync = Sync
     Sync()
 end
+
+-------------------------------------------------
+-- ColorPickerFrame
+-------------------------------------------------
+function UI:CreateColorPicker(parent, w, h, point, relativeTo, relativePoint, x, y, getFunc, setFunc, tooltipText)
+    local btn = CreateFrame("Button", nil, parent, "BackdropTemplate")
+    btn:SetSize(w or 26, h or 26)
+    btn:SetPoint(point or "TOPLEFT", relativeTo or parent, relativePoint or "TOPLEFT", x or 0, y or 0)
+    btn:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8X8",
+        edgeFile = "Interface\\Buttons\\WHITE8X8",
+        tile = false,
+        edgeSize = 1,
+        insets = { left = 1, right = 1, top = 1, bottom = 1 },
+    })
+    btn:SetBackdropBorderColor(0, 0, 0, 1)
+
+    local function Refresh()
+        local r, g, b, a = 1, 1, 1, 1
+        if getFunc then
+            r, g, b, a = getFunc()
+        end
+        btn:SetBackdropColor(r or 1, g or 1, b or 1, 1)
+        btn.__alpha = a or 1
+    end
+
+    btn:SetScript("OnClick", function()
+        local r, g, b, a = 1, 1, 1, 1
+        if getFunc then r, g, b, a = getFunc() end
+
+        UI:ShowColorPicker(r, g, b, a, function(nr, ng, nb, na)
+            if setFunc then setFunc(nr, ng, nb, na) end
+            Refresh()
+        end)
+    end)
+
+    if tooltipText then
+        btn:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(tooltipText)
+            GameTooltip:Show()
+        end)
+        btn:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+    end
+
+    btn.Refresh = Refresh
+    Refresh()
+    return btn
+end
+
 
 return UI
