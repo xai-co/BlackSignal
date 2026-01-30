@@ -1,7 +1,8 @@
-## Title: |cff7f3fbfBlack Signal|r
+## Title: |cff7f3fbfBlackSignal|r
 ## Notes: User Quality of Life Improvements
 ## Author: Xaico, Gwydeon
-## Version: 1.0
+## Version: 1.0.0
+## X-Wago-ID: QN53BPKB
 ## Interface: 120000, 120001
 ## IconTexture: Interface/AddOns/BlackSignal/Media/icon
 ## SavedVariables: BlackSignal

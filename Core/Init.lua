@@ -1,5 +1,5 @@
 -- Core/Init.lua
-local ADDON_NAME = "|cff7f3fbfBlack Signal|r"
+local ADDON_NAME = "|cff7f3fbfBlackSignal|r"
 
 _G.BS = _G.BS or {}
 local BS = _G.BS
