@@ -412,6 +412,40 @@ local function CreateModuleContent(parent, module)
         lastAnchor = lbl
     end
 
+    if module.db.thickness ~= nil then
+        local lbl = UI:CreateText(f, "Thickness:", "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0, -14, "GameFontHighlight")
+        local eb = UI:CreateEditBox(f, 70, 20, "LEFT", lbl, "RIGHT", 10, 0)
+        eb:SetText(tostring(module.db.thickness or 20))
+        eb:SetScript("OnEnterPressed", function(self)
+            local v = tonumber(self:GetText())
+            if v and v >= 10 and v <= 40 then
+                module.db.thickness = v
+                if module.StopTicker then module:StopTicker() end
+                if module.StartTicker then module:StartTicker() end
+                ApplyModuleExtra(module)
+            end
+            self:ClearFocus()
+        end)
+        lastAnchor = lbl
+    end
+
+    if module.db.size ~= nil then
+        local lbl = UI:CreateText(f, "Size:", "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0, -14, "GameFontHighlight")
+        local eb = UI:CreateEditBox(f, 70, 20, "LEFT", lbl, "RIGHT", 10, 0)
+        eb:SetText(tostring(module.db.size or 48))
+        eb:SetScript("OnEnterPressed", function(self)
+            local v = tonumber(self:GetText())
+            if v and v >= 12 and v <= 256 then
+                module.db.size = v
+                if module.StopTicker then module:StopTicker() end
+                if module.StartTicker then module:StartTicker() end
+                ApplyModuleExtra(module)
+            end
+            self:ClearFocus()
+        end)
+        lastAnchor = lbl
+    end
+
     if module.db.onlyShowIfKickReady ~= nil then
         local cb = UI:CreateCheck(f, "Only show if kick is ready", "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0, -14)
         cb:SetChecked(module.db.onlyShowIfKickReady == true)

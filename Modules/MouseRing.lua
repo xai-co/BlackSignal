@@ -24,12 +24,12 @@ local defaults = {
 
     -- Mouse ring settings
     ringEnabled   = true,
-    ringSize      = 48,
+    size      = 48,
     ringAlpha     = 0.9,
     ringColorR    = 0,
     ringColorG    = 1,
     ringColorB    = 0,
-    ringThickness = 20,     -- 10/20/30/40 (px)
+    thickness = 20,     -- 10/20/30/40 (px)
     --Para añadir el colorPicker en el panel de configuración
     colorPicker   = true,
 }
@@ -53,7 +53,7 @@ local function EnsureDB()
 end
 
 local function GetRingTexturePath(mdb)
-    local thickness = tonumber(mdb.ringThickness) or 20
+    local thickness = tonumber(mdb.thickness) or 20
     if thickness ~= 10 and thickness ~= 20 and thickness ~= 30 and thickness ~= 40 then
         thickness = 20
     end
@@ -66,7 +66,7 @@ function MouseRing:ApplySettings()
 
     local mdb   = self.db
 
-    local size  = tonumber(mdb.ringSize) or 48
+    local size  = tonumber(mdb.size) or 48
     local alpha = tonumber(mdb.ringAlpha) or 1
 
     if size < 12 then size = 12 end
@@ -101,7 +101,7 @@ end
 
 function MouseRing:OnInit()
     self.db = EnsureDB()
-    
+
     self.enabled = (self.db.enabled ~= false)
 
     if self.__initialized and self.frame then
