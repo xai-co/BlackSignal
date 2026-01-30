@@ -33,6 +33,7 @@ local defaults = {
 
     updateInterval = 0.05,
 
+    channelHoldSeconds = 0.20,
     onlyTargetingMe = true,
     alphaTargetingMe = 1.0,
     alphaNotTargetingMe = 0.0,
@@ -252,11 +253,15 @@ end
 function EnemyCastList:ReadUnitCast(unit)
     if not UnitExists(unit) then return nil end
 
-    local spellName = UnitCastingInfo(unit)
+    local now = GetTime()
+
+    -- Casting
+    local spellName, _, _, _, startMS, endMS = UnitCastingInfo(unit)
     local isChannel = false
 
+    -- Channeling
     if not spellName and (self.db.showChannels ~= false) then
-        spellName = UnitChannelInfo(unit)
+        spellName, _, _, _, startMS, endMS = UnitChannelInfo(unit)
         if spellName then isChannel = true end
     end
 
@@ -265,6 +270,10 @@ function EnemyCastList:ReadUnitCast(unit)
     local casterName = UnitName(unit) or unit
     local targetName = TryGetUnitTargetName(unit, self.db.noTargetText)
 
+    local hold = tonumber(self.db.channelHoldSeconds)
+        or tonumber(defaults.channelHoldSeconds)
+        or 0.20
+
     return {
         unit = unit,
         casterName = casterName,
@@ -272,25 +281,43 @@ function EnemyCastList:ReadUnitCast(unit)
         targetName = targetName,
         isChannel = isChannel,
 
-        -- ✅ lo guardamos para decidir alpha en render
+        -- ✅ estado para alpha + anti-flicker
         targetingMe = IsTargetingPlayer(unit),
+        holdUntil = now + (isChannel and hold or 0), -- solo aplicamos “hold” a canalizadas
+        lastSeen = now,
     }
 end
 
+
 function EnemyCastList:RefreshAll()
+    local now = GetTime()
+
     for unit, _ in pairs(self.units) do
         if UnitExists(unit) and IsUnitValidHostile(self, unit) then
             local c = self:ReadUnitCast(unit)
+
             if c then
+                -- cast “fresco”
                 self.casts[unit] = c
             else
-                self.casts[unit] = nil
+                -- si no hay info ahora, intenta mantener el último estado un poco (anti-flicker)
+                local prev = self.casts[unit]
+                if prev and prev.isChannel and prev.holdUntil and now < prev.holdUntil then
+                    -- refresca target/alpha aunque el channel “parpadee” en API
+                    prev.targetName = TryGetUnitTargetName(unit, self.db.noTargetText)
+                    prev.targetingMe = IsTargetingPlayer(unit)
+                    prev.lastSeen = now
+                    self.casts[unit] = prev
+                else
+                    self.casts[unit] = nil
+                end
             end
         else
             self.casts[unit] = nil
         end
     end
 end
+
 
 -------------------------------------------------
 -- Rendering
