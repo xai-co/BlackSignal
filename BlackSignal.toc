@@ -21,3 +21,4 @@ Modules/Shimmer/Shimmer.lua
 Modules/FocusCastTracker/FocusCastTracker.lua
 Modules/AutoQueue/AutoQueue.lua
 Modules/MouseRing/MouseRing.lua
+Modules/EnemyCastList/EnemyCastList.lua
