@@ -1,8 +1,7 @@
 -- Modules/TeleportButtons/TeleportButtons.lua
--- Minimal: DB solo enabled. Season actual manual (TWWS3). Sin spell scan.
-
 local BS = _G.BS
-if not BS then return end
+local DB = BS.DB
+if not BS and not DB then return end
 
 local TeleportButtons = {
   name = "TeleportButtons",
