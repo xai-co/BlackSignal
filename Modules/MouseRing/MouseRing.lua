@@ -11,16 +11,13 @@ local MouseRing = {
 
 BS:RegisterModule(MouseRing)
 
+local x = 0
+local y = 0
 -------------------------------------------------
 -- Defaults (para que Core/Config lo “entienda”)
 -------------------------------------------------
 local defaults = {
     enabled     = true,
-
-    -- No se usan para posicionar va al cursor, pero por si acaso lo declaro
-    x           = 0,
-    y           = 0,
-
     -- Mouse ring settings
     ringEnabled = true,
     size        = 48,
