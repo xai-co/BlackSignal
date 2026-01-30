@@ -14,10 +14,10 @@ BS:RegisterModule(Shimmer)
 -- Constants
 -------------------------------------------------
 local GetSpellCooldown = C_Spell.GetSpellCooldown
-local BLINK_ID   = 1953
-local SHIMMER_ID = 212653
+local BLINK_ID         = 1953
+local SHIMMER_ID       = 212653
 
-local defaults = {
+local defaults         = {
   enabled  = true,
   x        = 0,
   y        = 18,
@@ -36,29 +36,10 @@ local function EnsureDB()
   db.profile = db.profile or {}
   db.profile.modules = db.profile.modules or {}
   db.profile.modules.Shimmer = db.profile.modules.Shimmer or {}
+
   local mdb = db.profile.modules.Shimmer
-
-  if db.modules and db.modules.Shimmer and type(db.modules.Shimmer) == "table" then
-    for k, v in pairs(db.modules.Shimmer) do
-      if mdb[k] == nil then
-        mdb[k] = v
-      end
-    end
-  end
-
-  if mdb.enabled == nil and db.shimmercd_enabled ~= nil then mdb.enabled = db.shimmercd_enabled end
-  if mdb.fontSize == nil and db.shimmercd_fontSize ~= nil then mdb.fontSize = db.shimmercd_fontSize end
-  if mdb.x == nil and db.shimmercd_x ~= nil then mdb.x = db.shimmercd_x end
-  if mdb.y == nil and db.shimmercd_y ~= nil then mdb.y = db.shimmercd_y end
-  if mdb.text == nil and db.shimmercd_text ~= nil then mdb.text = db.shimmercd_text end
-  if mdb.fontSize == nil and db.fontSize ~= nil then mdb.fontSize = db.fontSize end
-  if mdb.text == nil and db.text ~= nil then mdb.text = db.text end
-
-  -- Defaults
   for k, v in pairs(defaults) do
-    if mdb[k] == nil then
-      mdb[k] = v
-    end
+    if mdb[k] == nil then mdb[k] = v end
   end
 
   return mdb
@@ -114,10 +95,10 @@ function Shimmer:Update()
   if not self.spellID or not self.frame or not self.text then return end
 
   local durationObject = C_Spell.GetSpellCooldownDuration(self.spellID)
----@diagnostic disable-next-line: undefined-field
+  ---@diagnostic disable-next-line: undefined-field
   if not durationObject or not durationObject.GetRemainingDuration then return end
 
----@diagnostic disable-next-line: undefined-field
+  ---@diagnostic disable-next-line: undefined-field
   local actualCooldown = durationObject:GetRemainingDuration(1)
 
   local prefix = self.db.text or defaults.text
@@ -154,16 +135,16 @@ end
 function Shimmer:OnInit()
   self.db = EnsureDB()
 
+  self.enabled = (self.db.enabled ~= false)
+
   EnsureUI(self)
   ApplyPosition(self)
   ApplyFont(self)
 
   self:ResolveSpell()
+  self.frame:SetShown(self.enabled)
 
-  local enabled = self.db.enabled ~= false
-  self.frame:SetShown(enabled)
-
-  if enabled then
+  if self.enabled then
     self:StartTicker()
     self:Update()
   else
@@ -185,7 +166,7 @@ local function TalentUpdate(self)
     self:ResolveSpell()
   end)
   C_Timer.After(0.6, function()
-    if self.db and self.db.enabled ~= false then
+    if self.enabled then
       self:StartTicker()
       self:Update()
     end

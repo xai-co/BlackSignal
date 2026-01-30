@@ -82,30 +82,19 @@ local KICK_TALENT_MODIFIERS = {
 -- DB (Ensure + optional migration)
 -------------------------------------------------
 local function EnsureDB()
-    _G.BlackSignal = _G.BlackSignal or {}
-    local db = _G.BlackSignal
+  _G.BlackSignal = _G.BlackSignal or {}
+  local db = _G.BlackSignal
 
-    db.profile = db.profile or {}
-    db.profile.modules = db.profile.modules or {}
-    db.profile.modules.FocusCastTracker = db.profile.modules.FocusCastTracker or {}
+  db.profile = db.profile or {}
+  db.profile.modules = db.profile.modules or {}
+  db.profile.modules.FocusCastTracker = db.profile.modules.FocusCastTracker or {}
 
-    local mdb = db.profile.modules.FocusCastTracker
+  local mdb = db.profile.modules.FocusCastTracker
+  for k, v in pairs(defaults) do
+    if mdb[k] == nil then mdb[k] = v end
+  end
 
-    if db.modules and db.modules.FocusCastTracker and type(db.modules.FocusCastTracker) == "table" then
-        for k, v in pairs(db.modules.FocusCastTracker) do
-            if mdb[k] == nil then
-                mdb[k] = v
-            end
-        end
-    end
-
-    for k, v in pairs(defaults) do
-        if mdb[k] == nil then
-            mdb[k] = v
-        end
-    end
-
-    return mdb
+  return mdb
 end
 
 -------------------------------------------------
@@ -375,7 +364,7 @@ function FocusCastTracker:ApplyOptions()
         self:RecomputeKickCooldown()
     end
 
-    if self.db and self.db.enabled ~= false then
+    if self.enabled then
         if self.castInfo then
             self:StartTicker()
         end
@@ -390,6 +379,7 @@ end
 -------------------------------------------------
 function FocusCastTracker:OnInit()
     self.db = EnsureDB()
+    self.enabled = (self.db.enabled ~= false)
 
     EnsureUI(self)
     ApplyPosition(self)
@@ -402,10 +392,9 @@ function FocusCastTracker:OnInit()
         self:RecomputeKickCooldown()
     end
 
-    local enabled = self.db.enabled ~= false
-    self.frame:SetShown(enabled)
+    self.frame:SetShown(self.enabled)
 
-    if enabled then
+    if self.enabled then
         self.castInfo = self:ReadFocusCast()
         if self.castInfo then
             self:StartTicker()
@@ -436,7 +425,7 @@ end
 -- Events (BS dispatcher)
 -------------------------------------------------
 FocusCastTracker.events.PLAYER_FOCUS_CHANGED = function(self)
-    if not self.db or self.db.enabled == false then return end
+    if not self.enabled then return end
     self.castInfo = self:ReadFocusCast()
 
     if self.castInfo then
@@ -449,7 +438,7 @@ end
 
 local function HandleFocusCastEvent(self, unit)
     if unit ~= "focus" then return end
-    if not self.db or self.db.enabled == false then return end
+    if not self.enabled then return end
 
     self.castInfo = self:ReadFocusCast()
     if self.castInfo then
@@ -476,7 +465,7 @@ FocusCastTracker.events.UNIT_SPELLCAST_SUCCEEDED = function(self, unit, castGUID
     end
 
     if unit ~= "player" then return end
-    if not self.db or self.db.enabled == false then return end
+    if not self.enabled then return end
     if not self.db.onlyShowIfKickReady then return end
 
     local kickId = self:GetKickSpellId()
@@ -487,7 +476,7 @@ FocusCastTracker.events.UNIT_SPELLCAST_SUCCEEDED = function(self, unit, castGUID
 end
 
 FocusCastTracker.events.PLAYER_TALENT_UPDATE = function(self)
-    if not self.db or self.db.enabled == false then return end
+    if not self.enabled then return end
     if InCombatLockdown() then return end
     self:RecomputeKickCooldown()
     if self.castInfo then
@@ -496,7 +485,7 @@ FocusCastTracker.events.PLAYER_TALENT_UPDATE = function(self)
 end
 
 FocusCastTracker.events.PLAYER_SPECIALIZATION_CHANGED = function(self)
-    if not self.db or self.db.enabled == false then return end
+    if not self.enabled then return end
     if InCombatLockdown() then return end
     self:RecomputeKickCooldown()
     if self.castInfo then
@@ -505,7 +494,7 @@ FocusCastTracker.events.PLAYER_SPECIALIZATION_CHANGED = function(self)
 end
 
 FocusCastTracker.events.PLAYER_REGEN_ENABLED = function(self)
-    if not self.db or self.db.enabled == false then return end
+    if not self.enabled then return end
     self:RecomputeKickCooldown()
     if self.castInfo then
         self:Update()

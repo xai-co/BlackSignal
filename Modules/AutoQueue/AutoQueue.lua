@@ -2,7 +2,9 @@
 -- Auto-complete LFG Role Check
 
 local BS = _G.BS
-if not BS then return end
+local DB = BS.DB
+
+if not BS and not DB then return end
 
 local AutoQueue = {
   name = "AutoQueue",
@@ -17,7 +19,6 @@ BS:RegisterModule(AutoQueue)
 -------------------------------------------------
 local defaults = {
   enabled = true,
-  active = true,
   printOnAccept = true,
 }
 
@@ -38,7 +39,7 @@ local function EnsureDB()
   for k, v in pairs(defaults) do
     if mdb[k] == nil then mdb[k] = v end
   end
-  
+
   return mdb
 end
 
@@ -53,7 +54,8 @@ end
 -- Core: Role check accept
 -------------------------------------------------
 function AutoQueue:TryCompleteRoleCheck()
-  if not self.db.enabled or not self.db.active then return end
+  print("Attempting to accept role check...")
+  if not self.enabled then return end
   if not CompleteLFGRoleCheck then return end
 
   local ok, err = pcall(CompleteLFGRoleCheck, true)
@@ -73,30 +75,30 @@ function AutoQueue:OnEvent(event, ...)
 end
 
 -------------------------------------------------
--- Slash handler (called by /xui router in Core/Config.lua)
+-- Slash
 -------------------------------------------------
 function AutoQueue:HandleSlash(arg)
   arg = (arg or ""):lower()
 
   if arg == "" or arg == "toggle" then
-    self.db.active = not self.db.active
-    Print("Auto Role Check: " .. (self.db.active and "ON" or "OFF"))
+    self.db.enabled = not self.db.enabled
+    Print("Auto Role Check: " .. (self.db.enabled and "ON" or "OFF"))
     return
   end
 
   if arg == "on" then
-    self.db.active = true
+    self.db.enabled = true
     Print("Auto Role Check: ON")
     return
   end
 
   if arg == "off" then
-    self.db.active = false
+    self.db.enabled = false
     Print("Auto Role Check: OFF")
     return
   end
 
-  Print("Usage: /xui aq [toggle|on|off]")
+  Print("Usage: /bs aq [toggle|on|off]")
 end
 
 -------------------------------------------------
@@ -104,6 +106,8 @@ end
 -------------------------------------------------
 function AutoQueue:OnInit()
   self.db = EnsureDB()
+
+  self.enabled = (self.db.enabled ~= false)
 
   if not self.eventFrame then
     local f = CreateFrame("Frame")
@@ -115,7 +119,7 @@ function AutoQueue:OnInit()
 
   self.eventFrame:UnregisterAllEvents()
 
-  if self.db.enabled then
+  if self.enabled then
     self.eventFrame:RegisterEvent("LFG_ROLE_CHECK_SHOW")
   end
 end

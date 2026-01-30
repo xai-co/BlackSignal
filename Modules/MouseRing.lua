@@ -1,8 +1,7 @@
 -- Modules/MouseRing.lua
 local BS = _G.BS
-if not BS then return end
-
 local DB = BS.DB
+if not BS and not DB then return end
 
 local MouseRing = {
     name = "MouseRing",
@@ -16,22 +15,22 @@ BS:RegisterModule(MouseRing)
 -- Defaults (para que Core/Config lo “entienda”)
 -------------------------------------------------
 local defaults = {
-    enabled       = true,
+    enabled     = true,
 
     -- No se usan para posicionar va al cursor, pero por si acaso lo declaro
-    x             = 0,
-    y             = 0,
+    x           = 0,
+    y           = 0,
 
     -- Mouse ring settings
-    ringEnabled   = true,
-    size      = 48,
-    ringAlpha     = 0.9,
-    ringColorR    = 0,
-    ringColorG    = 1,
-    ringColorB    = 0,
-    thickness = 20,     -- 10/20/30/40 (px)
+    ringEnabled = true,
+    size        = 48,
+    ringAlpha   = 0.9,
+    ringColorR  = 0,
+    ringColorG  = 1,
+    ringColorB  = 0,
+    thickness   = 20, -- 10/20/30/40 (px)
     --Para añadir el colorPicker en el panel de configuración
-    colorPicker   = true,
+    colorPicker = true,
 }
 
 MouseRing.defaults = defaults
