@@ -610,6 +610,8 @@ local function BuildUI()
     local f = CreateFrame("Frame", "BSConfigFrame", UIParent, "BackdropTemplate")
     Config.frame = f
 
+    tinsert(UISpecialFrames, f:GetName())
+
     f:SetSize(PANEL_W, PANEL_H)
     f:SetPoint("CENTER")
     f:SetMovable(true)
