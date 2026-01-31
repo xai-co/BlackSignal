@@ -22,6 +22,7 @@ Core/Events.lua
 Core/Movers.lua
 Core/UI/UI.lua
 Core/Config/LeftPanel.lua
+Core/Config/RightPanel.lua
 Core/Config/MainPanel.lua
 Core/Config/Config.lua
 

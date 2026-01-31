@@ -12,6 +12,7 @@ C.Brand = {
 -- Button
 C.Button = {
     normal       = {26/255, 26/255, 26/255, 1},
+    active       = {26/255, 26/255, 26/255, 1},
     borderNormal = {0, 0, 0, 1},
     borderHover  = { 150/255, 85/255, 225/255, 1 },
 }

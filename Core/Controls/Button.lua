@@ -4,7 +4,7 @@ BS.Button = {};
 local Button = BS.Button;
 
 local function ApplyStyle(btn, opts)
-    opts = opts or {}
+    opts               = opts or {}
 
     -- -----------------------------
     -- Options / defaults
@@ -15,6 +15,7 @@ local function ApplyStyle(btn, opts)
     local edgeSize     = opts.edgeSize or 1
 
     local color        = opts.color or BS.Colors.Button.normal
+    local colorActive  = opts.colorActive or BS.Colors.Button.active
     local normalText   = opts.normalText or BS.Colors.Text.normal
     local normalBorder = opts.normalBorder or BS.Colors.Button.borderNormal
     local hoverBorder  = opts.hoverBorder or BS.Colors.Button.borderHover
@@ -22,8 +23,8 @@ local function ApplyStyle(btn, opts)
     -- -----------------------------
     -- One-time setup
     -- -----------------------------
-    btn._bs = btn._bs or {}
-    local st = btn._bs
+    btn._bs            = btn._bs or {}
+    local st           = btn._bs
 
     btn:SetNormalFontObject("GameFontHighlightSmall")
     btn:SetHighlightFontObject("GameFontHighlightSmall")
@@ -67,6 +68,7 @@ local function ApplyStyle(btn, opts)
     st.edgeSize     = edgeSize
 
     st.color        = color
+    st.activeColor  = colorActive
     st.normalText   = normalText
     st.normalBorder = normalBorder
     st.hoverBorder  = hoverBorder
@@ -74,8 +76,8 @@ local function ApplyStyle(btn, opts)
     -- -----------------------------
     -- Layout + helpers
     -- -----------------------------
-    local border = st.border
-    local es = edgeSize
+    local border    = st.border
+    local es        = edgeSize
 
     -- Re-anchor every apply (safe if size changes). If you want ultra-minimal, you can guard with st.anchored+es.
     border.top:ClearAllPoints()
@@ -99,10 +101,10 @@ local function ApplyStyle(btn, opts)
     border.right:SetWidth(es)
 
     local function SetBorderRGBA(r, g, bl, a)
-        border.top:SetColorTexture(r, g, bl, a);    border.top:Show()
+        border.top:SetColorTexture(r, g, bl, a); border.top:Show()
         border.bottom:SetColorTexture(r, g, bl, a); border.bottom:Show()
-        border.left:SetColorTexture(r, g, bl, a);   border.left:Show()
-        border.right:SetColorTexture(r, g, bl, a);  border.right:Show()
+        border.left:SetColorTexture(r, g, bl, a); border.left:Show()
+        border.right:SetColorTexture(r, g, bl, a); border.right:Show()
     end
 
     local function SetTextRGBA()
@@ -136,7 +138,7 @@ local function ApplyStyle(btn, opts)
     -- -----------------------------
     -- Initial render
     -- -----------------------------
-    RenderState(st._bsActive and "active" or "normal")
+    RenderState(st._active and "active" or "normal")
 
     -- -----------------------------
     -- Events (only hook once)
@@ -144,48 +146,48 @@ local function ApplyStyle(btn, opts)
     if not st.hooked then
         btn:SetScript("OnEnter", function(self)
             local s = self._bs
-            if not s or s._bsActive then return end
+            if not s or s._active then return end
             s.bgTex:SetColorTexture(unpack(s.color))
             local bb = s.border
-            local r,g,b,a = unpack(s.hoverBorder)
-            bb.top:SetColorTexture(r,g,b,a);    bb.top:Show()
-            bb.bottom:SetColorTexture(r,g,b,a); bb.bottom:Show()
-            bb.left:SetColorTexture(r,g,b,a);   bb.left:Show()
-            bb.right:SetColorTexture(r,g,b,a);  bb.right:Show()
+            local r, g, b, a = unpack(s.hoverBorder)
+            bb.top:SetColorTexture(r, g, b, a); bb.top:Show()
+            bb.bottom:SetColorTexture(r, g, b, a); bb.bottom:Show()
+            bb.left:SetColorTexture(r, g, b, a); bb.left:Show()
+            bb.right:SetColorTexture(r, g, b, a); bb.right:Show()
         end)
 
         btn:SetScript("OnLeave", function(self)
             local s = self._bs
-            if not s or s._bsActive then return end
+            if not s or s._active then return end
             s.bgTex:SetColorTexture(unpack(s.color))
             local bb = s.border
-            local r,g,b,a = unpack(s.normalBorder)
-            bb.top:SetColorTexture(r,g,b,a);    bb.top:Show()
-            bb.bottom:SetColorTexture(r,g,b,a); bb.bottom:Show()
-            bb.left:SetColorTexture(r,g,b,a);   bb.left:Show()
-            bb.right:SetColorTexture(r,g,b,a);  bb.right:Show()
+            local r, g, b, a = unpack(s.normalBorder)
+            bb.top:SetColorTexture(r, g, b, a); bb.top:Show()
+            bb.bottom:SetColorTexture(r, g, b, a); bb.bottom:Show()
+            bb.left:SetColorTexture(r, g, b, a); bb.left:Show()
+            bb.right:SetColorTexture(r, g, b, a); bb.right:Show()
         end)
 
-        function btn:SetBSActive(active)
+        function btn:SetActive(active)
             local s = self._bs
             if not s then return end
-            s._bsActive = active and true or false
-
-            if s._bsActive then
-                s.bgTex:SetColorTexture(0, 0, 0, s.activeA)
-            else
-                s.bgTex:SetColorTexture(unpack(s.color))
-            end
-
+            s._active = active and true or false
+            s.bgTex:SetColorTexture(unpack(s.color))
             local bb = s.border
-            local r,g,b,a = unpack(s.normalBorder)
-            bb.top:SetColorTexture(r,g,b,a);    bb.top:Show()
-            bb.bottom:SetColorTexture(r,g,b,a); bb.bottom:Show()
-            bb.left:SetColorTexture(r,g,b,a);   bb.left:Show()
-            bb.right:SetColorTexture(r,g,b,a);  bb.right:Show()
 
-            local fs = self:GetFontString()
-            if fs then fs:SetTextColor(unpack(s.normalText)) end
+            if s._active then
+                local r, g, b, a = unpack(s.hoverBorder)
+                bb.top:SetColorTexture(r, g, b, a); bb.top:Show()
+                bb.bottom:SetColorTexture(r, g, b, a); bb.bottom:Show()
+                bb.left:SetColorTexture(r, g, b, a); bb.left:Show()
+                bb.right:SetColorTexture(r, g, b, a); bb.right:Show()
+            else
+                local r, g, b, a = unpack(s.normalBorder)
+                bb.top:SetColorTexture(r, g, b, a); bb.top:Show()
+                bb.bottom:SetColorTexture(r, g, b, a); bb.bottom:Show()
+                bb.left:SetColorTexture(r, g, b, a); bb.left:Show()
+                bb.right:SetColorTexture(r, g, b, a); bb.right:Show()
+            end
         end
 
         st.hooked = true
