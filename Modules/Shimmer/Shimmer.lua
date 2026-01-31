@@ -1,5 +1,5 @@
 -- Modules/Shimmer.lua
-local BS = _G.BS
+local _, BS = ...;
 
 local Shimmer = {
   name = "Shimmer",
@@ -8,7 +8,7 @@ local Shimmer = {
   events = {},
 }
 
-BS:RegisterModule(Shimmer)
+BS.API:Register(Shimmer)
 
 -------------------------------------------------
 -- Constants
@@ -25,25 +25,6 @@ local defaults         = {
   text     = "No Shimmer: ",
   font     = "Fonts\\FRIZQT__.TTF"
 }
-
--------------------------------------------------
--- DB (Ensure + Migration)
--------------------------------------------------
-local function EnsureDB()
-  _G.BlackSignal = _G.BlackSignal or {}
-  local db = _G.BlackSignal
-
-  db.profile = db.profile or {}
-  db.profile.modules = db.profile.modules or {}
-  db.profile.modules.Shimmer = db.profile.modules.Shimmer or {}
-
-  local mdb = db.profile.modules.Shimmer
-  for k, v in pairs(defaults) do
-    if mdb[k] == nil then mdb[k] = v end
-  end
-
-  return mdb
-end
 
 -------------------------------------------------
 -- UI
@@ -119,21 +100,17 @@ end
 -- Ticker
 -------------------------------------------------
 function Shimmer:StartTicker()
-  BS:StopTicker(self)
-  BS:RegisterTicker(self, 0.1, function()
+  BS.Tickers:Stop(self)
+  BS.Tickers:Register(self, 0.1, function()
     self:Update()
   end)
-end
-
-function Shimmer:StopTicker()
-  BS:StopTicker(self)
 end
 
 -------------------------------------------------
 -- Init
 -------------------------------------------------
 function Shimmer:OnInit()
-  self.db = EnsureDB()
+  self.db = BS.DB:EnsureDB(self.name, defaults)
 
   self.enabled = (self.db.enabled ~= false)
 
@@ -149,10 +126,10 @@ function Shimmer:OnInit()
     self:StartTicker()
     self:Update()
   else
-    self:StopTicker()
+    BS.Tickers:Stop(self)
   end
 
-  BS:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+  BS.Events.Create():RegisterEvent("SPELL_UPDATE_COOLDOWN")
 end
 
 -------------------------------------------------

@@ -1,6 +1,9 @@
 -- Core/Utils.lua
-local BS = _G.BS
+local _, BS = ...;
+BS.Utils = {}
 
-function BS:IsValidNumber(v)
+local Utils = BS.Utils
+
+function Utils:IsValidNumber(v)
     return v ~= nil and type(v) == "number"
 end

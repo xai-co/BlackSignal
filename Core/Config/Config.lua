@@ -1,9 +1,6 @@
 -- Core/Config.lua
-local BS = _G.BS or {}
-_G.BS = BS
-BS.modules = BS.modules or {}
-
-BS.Fonts = BS.Fonts or {}
+local _, BS = ...;
+BS.Fonts = {}
 
 local DB = BS.DB
 local UI = BS.UI
@@ -270,9 +267,11 @@ end
 -- Content factory
 -------------------------------------------------
 local function CreateModuleContent(parent, module)
-    local defaults = DB:BuildDefaults(module) or {}
+    local defaults = {
+        enabled = true,
+    }
 
-    module.db = module.db or DB:EnsureModuleDB(module.name, defaults)
+    module.db = module.db or BS.DB:EnsureDB(module.name, defaults)
     if module.enabled == nil then module.enabled = module.db.enabled end
 
     local canPos  = SupportsPosition(module, defaults)
@@ -543,9 +542,11 @@ local function CreateModuleContent(parent, module)
     -------------------------------------------------
     -- Reset (capability-aware)
     -------------------------------------------------
-    local reset = UI:CreateButton(f, "Reset Defaults", 140, 24, "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0, -18)
+    local reset = BS.Button:Create("ResetButton", f, 140, 24, "Reset Defaults", "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0, -18)
     reset:SetScript("OnClick", function()
-        local d = DB:BuildDefaults(module) or {}
+        local d = {
+            enabled = true,
+        }
 
         -- Always reset enabled if present
         if d.enabled ~= nil then
@@ -724,7 +725,7 @@ local function BuildUI()
     right:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -14, 14)
     UI:ApplyPanelStyle(right, 0.20, 1)
 
-    local modules = OrderedModules(BS.modules)
+    local modules = OrderedModules(BS.API.modules)
     if #modules == 0 then
         UI:CreateText(right, "No modules registered in BS.modules", "TOPLEFT", right, "TOPLEFT", 16, -16, "GameFontHighlight")
         return
@@ -736,7 +737,9 @@ local function BuildUI()
     local btnPad = 8
 
     for _, m in ipairs(modules) do
-        m.db = m.db or DB:EnsureModuleDB(m.name, DB:BuildDefaults(m))
+        m.db = m.db or BS.DB:EnsureDB(m.name, {
+            enabled = true,
+        })
         if m.enabled == nil then m.enabled = m.db.enabled end
 
         local btn = CreateFrame("Button", nil, left, "BackdropTemplate")
@@ -805,7 +808,7 @@ SlashCmdList["BS"] = function(msg)
     end
 
     if cmd == "aq" or cmd == "autoqueue" then
-        local m = _G.BS and _G.BS.modules and _G.BS.modules.AutoQueue
+        local m = BS.API.modules and BS.API.modules.AutoQueue
         if m and m.HandleSlash then
             m:HandleSlash(rest)
         else
@@ -858,10 +861,10 @@ end
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_LOGIN")
 ev:SetScript("OnEvent", function()
-    for _, m in pairs(BS.modules) do
+    for _, m in pairs(BS.API.modules) do
         if type(m) == "table" and m.name then
-            local d = DB:BuildDefaults(m) or {}
-            m.db = m.db or DB:EnsureModuleDB(m.name, d)
+            local d = {}
+            m.db = m.db or BS.DB:EnsureDB(m.name, d)
             if m.enabled == nil then m.enabled = m.db.enabled end
 
             -- Only ensure font defaults when module supports fonts

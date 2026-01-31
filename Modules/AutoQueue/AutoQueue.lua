@@ -1,7 +1,7 @@
 -- Modules/AutoQueue.lua
 -- Auto-complete LFG Role Check
+local _, BS = ...;
 
-local BS = _G.BS
 local DB = BS.DB
 
 if not BS and not DB then return end
@@ -12,7 +12,7 @@ local AutoQueue = {
   events = {},
 }
 
-BS:RegisterModule(AutoQueue)
+BS.API:Register(AutoQueue)
 
 -------------------------------------------------
 -- Defaults
@@ -23,25 +23,6 @@ local defaults = {
 }
 
 AutoQueue.defaults = defaults
-
--------------------------------------------------
--- DB
--------------------------------------------------
-local function EnsureDB()
-  _G.BlackSignal = _G.BlackSignal or {}
-  local db = _G.BlackSignal
-
-  db.profile = db.profile or {}
-  db.profile.modules = db.profile.modules or {}
-  db.profile.modules.AutoQueue = db.profile.modules.AutoQueue or {}
-
-  local mdb = db.profile.modules.AutoQueue
-  for k, v in pairs(defaults) do
-    if mdb[k] == nil then mdb[k] = v end
-  end
-
-  return mdb
-end
 
 -------------------------------------------------
 -- Utils
@@ -105,7 +86,7 @@ end
 -- Init / Apply
 -------------------------------------------------
 function AutoQueue:OnInit()
-  self.db = EnsureDB()
+  self.db = BS.DB:EnsureDB(self.name, self.defaults)
 
   self.enabled = (self.db.enabled ~= false)
 
@@ -125,7 +106,7 @@ function AutoQueue:OnInit()
 end
 
 function AutoQueue:Apply()
-  if not self.db then self.db = EnsureDB() end
+  if not self.db then self.db = BS.DB:EnsureDB(self.name, self.defaults) end
 
   if self.eventFrame then
     self.eventFrame:UnregisterAllEvents()

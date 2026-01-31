@@ -1,8 +1,7 @@
 -- Core/Movers.lua
-local BS = _G.BS
-if not BS then return end
+local _, BS = ...;
 
-BS.Movers       = BS.Movers or {}
+BS.Movers       = {}
 local Movers    = BS.Movers
 
 Movers._movers  = Movers._movers  or {}  -- key -> data
@@ -12,16 +11,9 @@ Movers._shown   = Movers._shown   or false
 -------------------------------------------------
 -- DB helper
 -------------------------------------------------
-local function EnsureMoversDB()
-    _G.BlackSignal = _G.BlackSignal or {}
-    local db = _G.BlackSignal
-    db.profile = db.profile or {}
-    db.profile.movers = db.profile.movers or {}
-    return db.profile.movers
-end
 
 local function GetDB()
-    Movers.db = Movers.db or EnsureMoversDB()
+    Movers.db = Movers.db or BS.DB:EnsureDB("Movers", {})
     return Movers.db
 end
 
@@ -31,7 +23,7 @@ end
 local function IsModuleEnabled(key)
     if not key or key == "" then return true end
 
-    local m = BS and BS.modules and BS.modules[key]
+    local m = BS and BS.API and BS.API.modules and BS.API.modules[key]
     if not m then return true end
 
     if m.enabled == false then return false end
@@ -90,9 +82,6 @@ end
 local function CreateMoverOverlay(key, label, w, h)
     local m = CreateFrame("Button", "BS_Mover_" .. key, UIParent, "BackdropTemplate")
 
-    local br, bg, bb = BS.colorRGB.r, BS.colorRGB.g, BS.colorRGB.b
-    local baseBgA, hoverBgA = 0.45, 0.70
-
     m:SetSize(w or 160, h or 22)
     m:SetFrameStrata("TOOLTIP")
     m:SetClampedToScreen(true)
@@ -104,23 +93,23 @@ local function CreateMoverOverlay(key, label, w, h)
         insets   = { left = 1, right = 1, top = 1, bottom = 1 },
     })
 
-    m:SetBackdropColor(0, 0, 0, baseBgA)
-    m:SetBackdropBorderColor(br, bg, bb, 1)
+    m:SetBackdropColor(unpack(BS.Colors.Movers.active))
+    m:SetBackdropBorderColor(unpack(BS.Colors.Brand.primary))
 
     m:SetScript("OnEnter", function(self)
-        self:SetBackdropColor(0, 0, 0, hoverBgA)
-        self:SetBackdropBorderColor(br, bg, bb, 1)
+        self:SetBackdropColor(unpack(BS.Colors.Movers.hover))
+        self:SetBackdropBorderColor(unpack(BS.Colors.Brand.primary))
     end)
 
     m:SetScript("OnLeave", function(self)
-        self:SetBackdropColor(0, 0, 0, baseBgA)
-        self:SetBackdropBorderColor(br, bg, bb, 1)
+        self:SetBackdropColor(unpack(BS.Colors.Movers.active))
+        self:SetBackdropBorderColor(unpack(BS.Colors.Brand.primary))
     end)
 
     local txt = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     txt:SetPoint("CENTER")
     txt:SetText(label or key)
-    txt:SetTextColor(br, bg, bb, 1)
+    txt:SetTextColor(unpack(BS.Colors.Text.normal))
     m.text = txt
 
     m:RegisterForDrag("LeftButton")

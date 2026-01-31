@@ -5,7 +5,7 @@
 ## X-Wago-ID: QN53BPKB
 ## Interface: 120000, 120001
 ## IconTexture: Interface/AddOns/BlackSignal/Media/icon
-## SavedVariables: BlackSignal
+## SavedVariables: BlackSignalDB
 
 Core/UI/Colors.lua
 Core/Controls/Button.lua
@@ -13,20 +13,20 @@ Core/Controls/CheckButton.lua
 Core/Controls/EditBox.lua
 Core/Controls/ColorPicker.lua
 
-Core/Init.lua
+Core/DB.lua
 Core/API.lua
 Core/Utils.lua
-Core/Ticker.lua
+Core/Tickers.lua
+Core/Init.lua
 Core/Events.lua
-Core/DB.lua
 Core/Movers.lua
 Core/UI/UI.lua
 Core/Config/Config.lua
 
 
-Modules/Shimmer/Shimmer.lua
-Modules/FocusCastTracker/FocusCastTracker.lua
 Modules/AutoQueue/AutoQueue.lua
-Modules/MouseRing/MouseRing.lua
-Modules/EnemyCastList/EnemyCastList.lua
-Modules/TeleportButtons/TeleportButtons.lua
+Modules/Shimmer/Shimmer.lua
+#Modules/FocusCastTracker/FocusCastTracker.lua
+#Modules/MouseRing/MouseRing.lua
+#Modules/EnemyCastList/EnemyCastList.lua
+#Modules/TeleportButtons/TeleportButtons.lua

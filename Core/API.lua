@@ -1,12 +1,16 @@
 -- Core/API.lua
-local BS = _G.BS
+local _, BS = ...;
+BS.API = {}
 
-function BS:RegisterModule(module)
+local API = BS.API
+API.modules = {}
+
+function API:Register(module)
   if type(module) ~= "table" or not module.name then return end
   self.modules[module.name] = module
 end
 
-function BS:LoadModules()
+function API:Load()
   local _, class = UnitClass("player")
 
   for _, module in pairs(self.modules) do
@@ -20,11 +24,5 @@ function BS:LoadModules()
         end
       end
     end
-  end
-end
-
-function BS:RegisterEvent(event)
-  if _G.BS_EventFrame then
-    _G.BS_EventFrame:RegisterEvent(event)
   end
 end

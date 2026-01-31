@@ -1,11 +1,10 @@
 -- Core/UI.lua
 -- UI helpers + reusable styles
+local _, BS = ...;
+BS.UI = {}
 
-local BS = _G.BS or {}
-_G.BS = BS
 
-local UI = {}
-BS.UI = UI
+local UI = BS.UI
 
 -------------------------------------------------
 -- Basic creators
