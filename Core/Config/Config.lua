@@ -41,7 +41,7 @@ SlashCmdList["BS"] = function(msg)
     end
 
     if cmd == "movers" then
-        if not (_G.BS and _G.BS.Movers and _G.BS.Movers.Toggle) then
+        if not (BS.Movers and BS.Movers.Toggle) then
             print("|cffb048f8BS:|r Movers no está disponible ")
             return
         end
@@ -50,22 +50,22 @@ SlashCmdList["BS"] = function(msg)
         sub = sub:match("^%s*(.-)%s*$")
 
         if sub == "" or sub == "toggle" then
-            _G.BS.Movers:Toggle()
+            BS.Movers:Toggle()
             return
         end
 
         if sub == "on" or sub == "unlock" or sub == "show" then
-            _G.BS.Movers:Unlock()
+            BS.Movers:Unlock()
             return
         end
 
         if sub == "off" or sub == "lock" or sub == "hide" then
-            _G.BS.Movers:Lock()
+            BS.Movers:Lock()
             return
         end
 
         if sub == "reset" then
-            _G.BS.Movers:ResetAll()
+            BS.Movers:ResetAll()
             print("|cffb048f8BS:|r Movers reseteados.")
             return
         end

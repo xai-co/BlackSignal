@@ -94,16 +94,16 @@ local function CreateMoverOverlay(key, label, w, h)
     })
 
     m:SetBackdropColor(unpack(BS.Colors.Movers.active))
-    m:SetBackdropBorderColor(unpack(BS.Colors.Brand.primary))
+    m:SetBackdropBorderColor(unpack(BS.Colors.Button.borderNormal))
 
     m:SetScript("OnEnter", function(self)
         self:SetBackdropColor(unpack(BS.Colors.Movers.hover))
-        self:SetBackdropBorderColor(unpack(BS.Colors.Brand.primary))
+        self:SetBackdropBorderColor(unpack(BS.Colors.Button.borderHover))
     end)
 
     m:SetScript("OnLeave", function(self)
         self:SetBackdropColor(unpack(BS.Colors.Movers.active))
-        self:SetBackdropBorderColor(unpack(BS.Colors.Brand.primary))
+        self:SetBackdropBorderColor(unpack(BS.Colors.Button.borderNormal))
     end)
 
     local txt = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
