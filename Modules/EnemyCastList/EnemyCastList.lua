@@ -185,11 +185,8 @@ local function Colorize(text, r, g, b)
 end
 
 local function GetUnitFullName(unit)
-    local name, realm = UnitName(unit)
+    local name, _ = UnitName(unit)
     if not name then return nil end
-    if realm and realm ~= "" then
-        return name .. "-" .. realm
-    end
     return name
 end
 
