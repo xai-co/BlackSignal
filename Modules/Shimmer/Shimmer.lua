@@ -140,7 +140,7 @@ function Shimmer:OnInit()
   EnsureUI(self)
   ApplyPosition(self)
   ApplyFont(self)
-  BS.Movers:Register(self.frame, "ShimmerText", "Shimmer Text")
+  BS.Movers:Register(self.frame, self.name, "Shimmer Text")
 
   self:ResolveSpell()
   self.frame:SetShown(self.enabled)

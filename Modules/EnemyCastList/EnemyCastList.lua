@@ -467,7 +467,7 @@ function EnemyCastList:OnInit()
     ApplySizeAndLayout(self)
     ApplyFont(self)
 
-    BS.Movers:Register(self.frame, "EnemyCastList", "Enemy Cast List")
+    BS.Movers:Register(self.frame, self.name, "Enemy Cast List")
     self:Reset()
 
     self.frame:SetShown(self.enabled)

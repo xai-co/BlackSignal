@@ -384,7 +384,7 @@ function FocusCastTracker:OnInit()
     EnsureUI(self)
     ApplyPosition(self)
     ApplyFont(self)
-    BS.Movers:Register(self.frame, "FocusCastTracker", "Focus Cast Tracker")
+    BS.Movers:Register(self.frame, self.name, "Focus Cast Tracker")
 
     self.lastKickAt = nil
     self.kickCooldownSeconds = nil

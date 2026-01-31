@@ -5,12 +5,12 @@ if not BS then return end
 BS.Movers       = BS.Movers or {}
 local Movers    = BS.Movers
 
-Movers._movers  = Movers._movers or {}  -- key -> data
-Movers._holders = Movers._holders or {} -- key -> holder
-Movers._shown   = Movers._shown or false
+Movers._movers  = Movers._movers  or {}  -- key -> data
+Movers._holders = Movers._holders or {}  -- key -> holder
+Movers._shown   = Movers._shown   or false
 
 -------------------------------------------------
--- DB helper (usa la misma raíz que tus módulos)
+-- DB helper
 -------------------------------------------------
 local function EnsureMoversDB()
     _G.BlackSignal = _G.BlackSignal or {}
@@ -26,24 +26,35 @@ local function GetDB()
 end
 
 -------------------------------------------------
--- Utils
+-- Module enabled check (key == module.name)
 -------------------------------------------------
-local function SafePoint(p) return p or "CENTER" end
-local function SafeRelPoint(p) return p or "CENTER" end
+local function IsModuleEnabled(key)
+    if not key or key == "" then return true end
 
+    local m = BS and BS.modules and BS.modules[key]
+    if not m then return true end
+
+    if m.enabled == false then return false end
+    if m.db and m.db.enabled == false then return false end
+
+    return true
+end
+
+-------------------------------------------------
+-- Position helpers (safe)
+-------------------------------------------------
 local function ApplyHolderPosition(key, holder)
     local db = GetDB()
-    local t = db[key]
-    if not t then return false end
+    local t = db and db[key]
+    if type(t) ~= "table" then return false end
+
+    local point    = type(t.point) == "string" and t.point or "CENTER"
+    local relPoint = type(t.relPoint) == "string" and t.relPoint or "CENTER"
+    local x        = tonumber(t.x) or 0
+    local y        = tonumber(t.y) or 0
 
     holder:ClearAllPoints()
-    holder:SetPoint(
-        SafePoint(t.point),
-        UIParent,
-        SafeRelPoint(t.relPoint),
-        tonumber(t.x) or 0,
-        tonumber(t.y) or 0
-    )
+    holder:SetPoint(point, UIParent, relPoint, x, y)
     return true
 end
 
@@ -60,6 +71,9 @@ local function SaveHolderPosition(key, holder)
     db[key].y = y
 end
 
+-------------------------------------------------
+-- Holder
+-------------------------------------------------
 local function CreateHolder(key)
     local h = CreateFrame("Frame", "BS_MoverHolder_" .. key, UIParent)
     h:SetSize(10, 10)
@@ -70,13 +84,14 @@ local function CreateHolder(key)
     return h
 end
 
+-------------------------------------------------
+-- Mover overlay (visual)
+-------------------------------------------------
 local function CreateMoverOverlay(key, label, w, h)
     local m = CreateFrame("Button", "BS_Mover_" .. key, UIParent, "BackdropTemplate")
-    local br, bg, bb = BS.colorRGB["r"], BS.colorRGB["g"], BS.colorRGB["b"]
-    local baseBgA = 0.45
-    local hoverBgA = 0.70
-    local baseBrA = 1.0
-    local hoverBrA = 1.0
+
+    local br, bg, bb = BS.colorRGB.r, BS.colorRGB.g, BS.colorRGB.b
+    local baseBgA, hoverBgA = 0.45, 0.70
 
     m:SetSize(w or 160, h or 22)
     m:SetFrameStrata("TOOLTIP")
@@ -88,21 +103,24 @@ local function CreateMoverOverlay(key, label, w, h)
         edgeSize = 1,
         insets   = { left = 1, right = 1, top = 1, bottom = 1 },
     })
+
     m:SetBackdropColor(0, 0, 0, baseBgA)
-    m:SetBackdropBorderColor(br, bg, bb, baseBrA)
+    m:SetBackdropBorderColor(br, bg, bb, 1)
+
     m:SetScript("OnEnter", function(self)
         self:SetBackdropColor(0, 0, 0, hoverBgA)
-        self:SetBackdropBorderColor(br, bg, bb, hoverBrA)
+        self:SetBackdropBorderColor(br, bg, bb, 1)
     end)
+
     m:SetScript("OnLeave", function(self)
         self:SetBackdropColor(0, 0, 0, baseBgA)
-        self:SetBackdropBorderColor(br, bg, bb, baseBrA)
+        self:SetBackdropBorderColor(br, bg, bb, 1)
     end)
 
     local txt = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     txt:SetPoint("CENTER")
     txt:SetText(label or key)
-    txt:SetTextColor(BS.colorRGB["r"], BS.colorRGB["g"], BS.colorRGB["b"], 1)
+    txt:SetTextColor(br, bg, bb, 1)
     m.text = txt
 
     m:RegisterForDrag("LeftButton")
@@ -116,9 +134,8 @@ end
 -- Public API
 -------------------------------------------------
 
-function Movers:Register(frame, key, label, opts)
+function Movers:Register(frame, key, label)
     if not frame or not key then return end
-    opts = opts or {}
 
     -- Ya registrado → reaplica
     if self._movers[key] then
@@ -134,9 +151,7 @@ function Movers:Register(frame, key, label, opts)
 
     local db = GetDB()
 
-    -------------------------------------------------
-    -- Default position: usa la posición ACTUAL del frame
-    -------------------------------------------------
+    -- Default DB entry desde posición actual del frame
     if not db[key] then
         local cx, cy = frame:GetCenter()
         local ux, uy = UIParent:GetCenter()
@@ -155,28 +170,19 @@ function Movers:Register(frame, key, label, opts)
         }
     end
 
-    -------------------------------------------------
     -- Aplica posición al holder
-    -------------------------------------------------
     ApplyHolderPosition(key, holder)
 
-    -------------------------------------------------
     -- Ancla frame real al holder
-    -------------------------------------------------
     frame:ClearAllPoints()
     frame:SetPoint("CENTER", holder, "CENTER", 0, 0)
 
-    -------------------------------------------------
     -- Tamaño del mover = tamaño real del frame
-    -------------------------------------------------
-    local w = frame:GetWidth() or 160
+    local w = frame:GetWidth()  or 160
     local h = frame:GetHeight() or 22
 
-    -------------------------------------------------
-    -- Mover overlay
-    -------------------------------------------------
+    -- Overlay
     local mover = CreateMoverOverlay(key, label or key, w, h)
-    mover:ClearAllPoints()
     mover:SetPoint("CENTER", holder, "CENTER", 0, 0)
     mover:SetShown(self._shown)
 
@@ -200,10 +206,10 @@ function Movers:Register(frame, key, label, opts)
     end)
 
     self._movers[key] = {
-        key = key,
-        frame = frame,
+        key    = key,
+        frame  = frame,
         holder = holder,
-        mover = mover,
+        mover  = mover,
     }
 
     return mover
@@ -213,13 +219,17 @@ function Movers:Apply(key)
     local data = self._movers[key]
     if not data then return end
 
-    ApplyHolderPosition(key, data.holder)
+    local ok = ApplyHolderPosition(key, data.holder)
+    if not ok then
+        data.holder:ClearAllPoints()
+        data.holder:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    end
 
     data.mover:ClearAllPoints()
     data.mover:SetPoint("CENTER", data.holder, "CENTER", 0, 0)
 
     data.frame:ClearAllPoints()
-    data.frame:SetPoint(data.ap, data.holder, data.arp, 0, 0)
+    data.frame:SetPoint("CENTER", data.holder, "CENTER", 0, 0)
 end
 
 function Movers:ApplyAll()
@@ -233,9 +243,14 @@ function Movers:Unlock()
         UIErrorsFrame:AddMessage("BlackSignal: no puedes activar movers en combate.", 1, 0.2, 0.2)
         return
     end
+
     self._shown = true
-    for _, data in pairs(self._movers) do
-        data.mover:Show()
+    for key, data in pairs(self._movers) do
+        if IsModuleEnabled(key) then
+            data.mover:Show()
+        else
+            data.mover:Hide()
+        end
     end
 end
 
@@ -250,7 +265,6 @@ function Movers:Toggle()
     if self._shown then self:Lock() else self:Unlock() end
 end
 
--- Extra: reset individual
 function Movers:Reset(key)
     local db = GetDB()
     db[key] = nil
