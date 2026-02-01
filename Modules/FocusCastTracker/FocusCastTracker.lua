@@ -1,6 +1,11 @@
 -- Modules/FocusCastTracker.lua
-local BS = _G.BS
-if not BS then return end
+-- @module FocusCastTracker
+-- @alias FocusCastTracker
+
+local _, BS = ...;
+
+local API   = BS.API
+local DB    = BS.DB
 
 local FocusCastTracker = {
     name = "FocusCastTracker",
@@ -8,7 +13,7 @@ local FocusCastTracker = {
     events = {},
 }
 
-BS:RegisterModule(FocusCastTracker)
+API:RegisterModule(FocusCastTracker)
 
 -------------------------------------------------
 -- Constants / Defaults
@@ -77,25 +82,6 @@ local KICK_TALENT_MODIFIERS = {
         { talentSpellId = 382297, delta = -5 },
     },
 }
-
--------------------------------------------------
--- DB (Ensure + optional migration)
--------------------------------------------------
-local function EnsureDB()
-  _G.BlackSignal = _G.BlackSignal or {}
-  local db = _G.BlackSignal
-
-  db.profile = db.profile or {}
-  db.profile.modules = db.profile.modules or {}
-  db.profile.modules.FocusCastTracker = db.profile.modules.FocusCastTracker or {}
-
-  local mdb = db.profile.modules.FocusCastTracker
-  for k, v in pairs(defaults) do
-    if mdb[k] == nil then mdb[k] = v end
-  end
-
-  return mdb
-end
 
 -------------------------------------------------
 -- UI
@@ -378,7 +364,7 @@ end
 -- Init
 -------------------------------------------------
 function FocusCastTracker:OnInit()
-    self.db = EnsureDB()
+    self.db = DB:EnsureDB(self.name, defaults)
     self.enabled = (self.db.enabled ~= false)
 
     EnsureUI(self)
