@@ -368,7 +368,10 @@ function FocusCastTracker:OnInit()
     EnsureUI(self)
     ApplyPosition(self)
     ApplyFont(self)
-    BS.Movers:Register(self.frame, self.name, "Focus Cast Tracker")
+
+    if BS.Movers then
+        BS.Movers:Register(self.frame, self.name, "Focus Cast Tracker")
+    end
 
     self.lastKickAt = nil
     self.kickCooldownSeconds = nil
@@ -377,36 +380,45 @@ function FocusCastTracker:OnInit()
         self:RecomputeKickCooldown()
     end
 
-    self.frame:SetShown(self.enabled)
+    self.castInfo = self:ReadFocusCast()
+    self:Update()
 
-    if self.enabled then
-        self.castInfo = self:ReadFocusCast()
-        if self.castInfo then
-            self:StartTicker()
-        else
-            Tickers:Stop(self)
-        end
-        self:Update()
+    if self.enabled and self.castInfo then
+        self:StartTicker()
     else
-        self:ClearCast()
+        Tickers:Stop(self)
     end
 
-    local f = Events.Create()
+    Events:RegisterEvent("PLAYER_ENTERING_WORLD")
+    Events:RegisterEvent("PLAYER_FOCUS_CHANGED")
 
-    f:RegisterEvent("PLAYER_FOCUS_CHANGED")
-    f:RegisterEvent("UNIT_SPELLCAST_START")
-    f:RegisterEvent("UNIT_SPELLCAST_STOP")
-    f:RegisterEvent("UNIT_SPELLCAST_FAILED")
-    f:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
-    f:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-    f:RegisterEvent("UNIT_SPELLCAST_DELAYED")
-    f:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
-    f:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
-    f:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
-    f:RegisterEvent("PLAYER_TALENT_UPDATE")
-    f:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-    f:RegisterEvent("PLAYER_REGEN_ENABLED")
+    if Events.RegisterUnitEvent then
+        Events:RegisterUnitEvent("UNIT_SPELLCAST_START", "focus")
+        Events:RegisterUnitEvent("UNIT_SPELLCAST_STOP", "focus")
+        Events:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", "focus")
+        Events:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", "focus")
+        Events:RegisterUnitEvent("UNIT_SPELLCAST_DELAYED", "focus")
+        Events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "focus")
+        Events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_STOP", "focus")
+        Events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_UPDATE", "focus")
+        Events:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player") 
+    else
+        Events:RegisterEvent("UNIT_SPELLCAST_START")
+        Events:RegisterEvent("UNIT_SPELLCAST_STOP")
+        Events:RegisterEvent("UNIT_SPELLCAST_FAILED")
+        Events:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+        Events:RegisterEvent("UNIT_SPELLCAST_DELAYED")
+        Events:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
+        Events:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+        Events:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
+        Events:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    end
+
+    Events:RegisterEvent("PLAYER_TALENT_UPDATE")
+    Events:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+    Events:RegisterEvent("PLAYER_REGEN_ENABLED")
 end
+
 
 -------------------------------------------------
 -- Events (BS dispatcher)
@@ -486,4 +498,15 @@ FocusCastTracker.events.PLAYER_REGEN_ENABLED = function(self)
     if self.castInfo then
         self:Update()
     end
+end
+
+FocusCastTracker.events.PLAYER_ENTERING_WORLD = function(self)
+    if not self.enabled then return end
+    self.castInfo = self:ReadFocusCast()
+    if self.castInfo then
+        self:StartTicker()
+    else
+        Tickers:Stop(self)
+    end
+    self:Update()
 end

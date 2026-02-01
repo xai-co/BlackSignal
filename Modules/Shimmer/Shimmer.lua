@@ -2,7 +2,10 @@
 -- @module Shimmer
 -- @alias Shimmer
 
-local _, BS = ...;
+local _, BS   = ...;
+
+local API     = BS.API
+local Events  = BS.Events
 
 
 local Shimmer = {
@@ -12,7 +15,7 @@ local Shimmer = {
   events = {},
 }
 
-BS.API:Register(Shimmer)
+API:Register(Shimmer)
 
 -------------------------------------------------
 -- Constants
@@ -142,7 +145,7 @@ function Shimmer:OnInit()
     BS.Tickers:Stop(self)
   end
 
-  BS.Events.Create():RegisterEvent("SPELL_UPDATE_COOLDOWN")
+  Events:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 end
 
 -------------------------------------------------

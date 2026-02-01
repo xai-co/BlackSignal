@@ -4,17 +4,10 @@
 
 local _, BS  = ...;
 
-BS.Events    = {}
-local Events = BS.Events
-
---- Create an event frame
---- @return frame Frame The created event frame
-function Events:Create()
-  return CreateFrame("Frame")
-end
+BS.Events    = BS.Events or CreateFrame("Frame")
 
 --- Event frame to handle and dispatch events to modules
-local f = Events:Create()
+local f = BS.Events
 
 --- Event handler to dispatch events to registered module event handlers
 f:SetScript("OnEvent", function(_, event, ...)
