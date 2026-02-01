@@ -1,10 +1,10 @@
 -- Modules/AutoQueue.lua
--- Auto-complete LFG Role Check
+-- @module AutoQueue
+-- @alias AutoQueue
+
 local _, BS = ...;
 
-local DB = BS.DB
-
-if not BS and not DB then return end
+local DB    = BS.DB
 
 local AutoQueue = {
   name = "AutoQueue",
@@ -27,12 +27,20 @@ AutoQueue.defaults = defaults
 -------------------------------------------------
 -- Utils
 -------------------------------------------------
+--- Print message to chat frame
+--- @local
+--- @param msg string The message to print
+--- @return nil
+-------------------------------------------------
 local function Print(msg)
   DEFAULT_CHAT_FRAME:AddMessage("|cffb048f8BS AutoQueue:|r " .. tostring(msg))
 end
 
 -------------------------------------------------
 -- Core: Role check accept
+-------------------------------------------------
+--- Try to complete the role check
+--- @return nil
 -------------------------------------------------
 function AutoQueue:TryCompleteRoleCheck()
   print("Attempting to accept role check...")
@@ -49,6 +57,12 @@ function AutoQueue:TryCompleteRoleCheck()
   end
 end
 
+-------------------------------------------------
+--- Event Handler
+--- @param event string The event name
+--- @param ... any Additional event arguments
+--- @return nil
+-------------------------------------------------
 function AutoQueue:OnEvent(event, ...)
   if event == "LFG_ROLE_CHECK_SHOW" then
     self:TryCompleteRoleCheck()
@@ -57,6 +71,10 @@ end
 
 -------------------------------------------------
 -- Slash
+-------------------------------------------------
+--- Handle slash commands
+--- @param arg string The slash command argument
+--- @return nil
 -------------------------------------------------
 function AutoQueue:HandleSlash(arg)
   arg = (arg or ""):lower()
@@ -86,7 +104,7 @@ end
 -- Init / Apply
 -------------------------------------------------
 function AutoQueue:OnInit()
-  self.db = BS.DB:EnsureDB(self.name, self.defaults)
+  self.db = DB:EnsureDB(self.name, self.defaults)
 
   self.enabled = (self.db.enabled ~= false)
 
@@ -105,8 +123,12 @@ function AutoQueue:OnInit()
   end
 end
 
+-------------------------------------------------
+--- Apply configuration changes
+--- @return nil
+-------------------------------------------------
 function AutoQueue:Apply()
-  if not self.db then self.db = BS.DB:EnsureDB(self.name, self.defaults) end
+  if not self.db then self.db = DB:EnsureDB(self.name, self.defaults) end
 
   if self.eventFrame then
     self.eventFrame:UnregisterAllEvents()
