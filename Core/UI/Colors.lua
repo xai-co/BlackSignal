@@ -39,6 +39,7 @@ C.ColorPicker = {
 -- Text
 C.Text = {
     normal      = { 185/255, 100/255, 255/255, 1 },
+    white       = { 1, 1, 1, 1 },
 }
 
 -- Background
