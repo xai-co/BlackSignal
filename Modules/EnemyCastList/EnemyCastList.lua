@@ -1,10 +1,11 @@
 -- Modules/EnemyCastList.lua
--- Lista simple de casteos de enemigos visibles (nameplates), sin Combat Log.
--- Muestra: "Spell >> Target (Caster)"
--- Sin tiempos. Se mantiene mientras UnitCastingInfo/UnitChannelInfo devuelvan cast.
+-- @module EnemyCastList
+-- @alias EnemyCastList
 
-local BS = _G.BS
-if not BS then return end
+local _, BS = ...;
+
+local API   = BS.API
+local DB    = BS.DB
 
 local EnemyCastList = {
     name = "EnemyCastList",
@@ -12,7 +13,7 @@ local EnemyCastList = {
     events = {},
 }
 
-BS:RegisterModule(EnemyCastList)
+API:RegisterModule(EnemyCastList)
 
 -------------------------------------------------
 -- Constants / Defaults
@@ -49,24 +50,6 @@ local defaults = {
 EnemyCastList.defaults = defaults
 function EnemyCastList:BuildDefaults()
     return defaults
-end
-
--------------------------------------------------
--- DB
--------------------------------------------------
-local function EnsureDB()
-    _G.BlackSignal = _G.BlackSignal or {}
-    local db = _G.BlackSignal
-
-    db.profile = db.profile or {}
-    db.profile.modules = db.profile.modules or {}
-    db.profile.modules.EnemyCastList = db.profile.modules.EnemyCastList or {}
-
-    local mdb = db.profile.modules.EnemyCastList
-    for k, v in pairs(defaults) do
-        if mdb[k] == nil then mdb[k] = v end
-    end
-    return mdb
 end
 
 -------------------------------------------------
@@ -253,12 +236,12 @@ function EnemyCastList:ReadUnitCast(unit)
     local now = GetTime()
 
     -- Casting
-    local spellName, _, _, _, startMS, endMS = UnitCastingInfo(unit)
+    local spellName, _, _, _, _, _ = UnitCastingInfo(unit)
     local isChannel = false
 
     -- Channeling
     if not spellName and (self.db.showChannels ~= false) then
-        spellName, _, _, _, startMS, endMS = UnitChannelInfo(unit)
+        spellName, _, _, _, _, _ = UnitChannelInfo(unit)
         if spellName then isChannel = true end
     end
 
@@ -456,7 +439,7 @@ end
 -- Init
 -------------------------------------------------
 function EnemyCastList:OnInit()
-    self.db = EnsureDB()
+    self.db = DB:EnsureDB(self.name, defaults)
     self.enabled = (self.db.enabled ~= false)
 
     EnsureUI(self)
