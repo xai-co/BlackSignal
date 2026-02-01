@@ -1,7 +1,10 @@
 -- Modules/MouseRing.lua
-local BS = _G.BS
-local DB = BS.DB
-if not BS and not DB then return end
+-- @module MouseRing
+-- @alias MouseRing
+local _, BS     = ...;
+
+local DB        = BS.DB
+local API       = BS.API
 
 local MouseRing = {
     name = "MouseRing",
@@ -9,7 +12,7 @@ local MouseRing = {
     events = {},
 }
 
-BS:RegisterModule(MouseRing)
+API:Register(MouseRing)
 
 local x = 0
 local y = 0
@@ -31,22 +34,6 @@ local defaults = {
 }
 
 MouseRing.defaults = defaults
-
-local function EnsureDB()
-    _G.BlackSignal = _G.BlackSignal or {}
-    local db = _G.BlackSignal
-
-    db.profile = db.profile or {}
-    db.profile.modules = db.profile.modules or {}
-    db.profile.modules.MouseRing = db.profile.modules.MouseRing or {}
-
-    local mdb = db.profile.modules.MouseRing
-    for k, v in pairs(defaults) do
-        if mdb[k] == nil then mdb[k] = v end
-    end
-
-    return mdb
-end
 
 local function GetRingTexturePath(mdb)
     local thickness = tonumber(mdb.thickness) or 20
@@ -96,7 +83,7 @@ function MouseRing:Update()
 end
 
 function MouseRing:OnInit()
-    self.db = EnsureDB()
+    self.db = DB:EnsureDB(self.name, defaults)
 
     self.enabled = (self.db.enabled ~= false)
 

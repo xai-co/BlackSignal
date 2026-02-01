@@ -30,6 +30,6 @@ Core/Config/Config.lua
 Modules/AutoQueue/AutoQueue.lua
 Modules/Shimmer/Shimmer.lua
 Modules/FocusCastTracker/FocusCastTracker.lua
-#Modules/MouseRing/MouseRing.lua
+Modules/MouseRing/MouseRing.lua
 Modules/EnemyCastList/EnemyCastList.lua
-#Modules/TeleportButtons/TeleportButtons.lua
+Modules/TeleportButtons/TeleportButtons.lua

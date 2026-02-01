@@ -1,7 +1,10 @@
 -- Modules/TeleportButtons/TeleportButtons.lua
-local BS = _G.BS
-local DB = BS.DB
-if not BS and not DB then return end
+-- @module TeleportButtons
+-- @alias TeleportButtons
+local _, BS = ...;
+
+local API   = BS.API
+local DB    = BS.DB
 
 local TeleportButtons = {
   name = "TeleportButtons",
@@ -9,23 +12,7 @@ local TeleportButtons = {
   events = {},
 }
 
-BS:RegisterModule(TeleportButtons)
-
--------------------------------------------------
--- DB (solo enabled)
--------------------------------------------------
-local function EnsureDB()
-  _G.BlackSignal = _G.BlackSignal or {}
-  local db = _G.BlackSignal
-
-  db.profile = db.profile or {}
-  db.profile.modules = db.profile.modules or {}
-  db.profile.modules.TeleportButtons = db.profile.modules.TeleportButtons or {}
-
-  local mdb = db.profile.modules.TeleportButtons
-  if mdb.enabled == nil then mdb.enabled = true end
-  return mdb
-end
+API:Register(TeleportButtons)
 
 -------------------------------------------------
 --  Config 
@@ -259,7 +246,7 @@ end
 -- Init / Apply
 -------------------------------------------------
 function TeleportButtons:OnInit()
-  self.db = EnsureDB()
+  self.db = DB:EnsureDB(self.name, { enabled = true })
   self.enabled = (self.db.enabled ~= false)
 
   EnsureFrame(self)
@@ -280,7 +267,7 @@ function TeleportButtons:OnInit()
 end
 
 function TeleportButtons:Apply()
-  if not self.db then self.db = EnsureDB() end
+  if not self.db then self.db = DB:EnsureDB(self.name, { enabled = true }) end
   self.enabled = (self.db.enabled ~= false)
 
   FixPVEFrameAnchor()
