@@ -1,4 +1,7 @@
 -- MainPanel.lua
+-- @module MainPanel
+-- @alias MainPanel
+
 local _, BS = ...
 BS.MainPanel = BS.MainPanel or {}
 
@@ -7,23 +10,40 @@ local MainPanel = BS.MainPanel
 local UI = BS.UI
 local ConfigFrame
 
-local PANEL_W, PANEL_H = 840, 535
+local PANEL_W = 840 -- Panel width
+local PANEL_H = 535 -- Panel height
 
+---------------------------------------------------------------+
+----- Main Panel Toggle Functionality
+---------------------------------------------------------------+
+
+--- Toggle the main configuration panel
 function MainPanel:Toggle()
     local menu = ConfigFrame or MainPanel:CreateMenu()
     menu:SetShown(not menu:IsShown())
 end
 
+--- Handle module selection from the left panel
+--- @local
+--- @param leftPanel Frame table The left panel instance
+--- @param module table The selected module data
 local function onSelectModule(leftPanel, module)
+    ---@diagnostic disable-next-line: undefined-field
     if leftPanel and leftPanel.SetActive then
+        ---@diagnostic disable-next-line: undefined-field
         leftPanel:SetActive(module and module.name)
     end
+
     if BS.RightPanel and BS.RightPanel.ShowModule then
         BS.RightPanel:ShowModule(module)
     end
 end
 
+
+--- Create the main configuration menu
+--- @return frame Frame The created configuration frame
 function MainPanel:CreateMenu()
+    --- Create the main configuration frame
     ConfigFrame = CreateFrame("Frame", "BSConfig", UIParent, "BackdropTemplate")
     ConfigFrame:SetSize(PANEL_W, PANEL_H)
     ConfigFrame:SetPoint("CENTER")
@@ -47,7 +67,7 @@ function MainPanel:CreateMenu()
     ConfigFrame:SetBackdropColor(unpack(BS.Colors.Backdrop.background))
     ConfigFrame:SetBackdropBorderColor(unpack(BS.Colors.Backdrop.border))
 
-    -- Title + Icon
+    --- Title and Icon header
     local iconPath = "Interface\\AddOns\\BlackSignal\\Media\\icon_64.tga"
     local icon = ConfigFrame:CreateTexture(nil, "ARTWORK")
     icon:SetSize(32, 32)
@@ -58,7 +78,7 @@ function MainPanel:CreateMenu()
     local title = UI:CreateText(ConfigFrame, "BlackSignal", "LEFT", icon, "RIGHT", 6, 0, "GameFontNormalLarge")
     title:SetTextColor(unpack(BS.Colors.Text.normal))
 
-    -- Close
+    --- Close button
     local close = CreateFrame("Button", nil, ConfigFrame)
     close:SetSize(32, 32)
     close:SetPoint("TOPRIGHT", ConfigFrame, "TOPRIGHT", -8, -8)
@@ -69,21 +89,21 @@ function MainPanel:CreateMenu()
     close:SetScript("OnEnter", function(self) self:GetFontString():SetTextColor(1, 0.3, 0.3, 1) end)
     close:SetScript("OnLeave", function(self) self:GetFontString():SetTextColor(1, 1, 1, 1) end)
 
-    -- Movers
+    --- Movers button
     local movers = BS.Button:Create("BSConfigMoversButton", ConfigFrame, 80, 25, "Movers", "RIGHT", close, "LEFT", -6, 0)
     movers:SetScript("OnClick", function()
         if BS.Movers and BS.Movers.Toggle then BS.Movers:Toggle() end
     end)
 
-    -- Left panel
+    --- Left panel
     local leftPanel = BS.LeftPanel:Create(ConfigFrame, function(module)
         onSelectModule(leftPanel, module)
     end)
 
-    -- Right panel
+    --- Right panel
     BS.RightPanel:Create(ConfigFrame, leftPanel)
 
-    -- Select first module by default
+    --- Select the first module by default
     if leftPanel and leftPanel.GetFirstModule then
         local first = leftPanel:GetFirstModule()
         if first then
