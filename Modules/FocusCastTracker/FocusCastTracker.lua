@@ -2,10 +2,12 @@
 -- @module FocusCastTracker
 -- @alias FocusCastTracker
 
-local _, BS = ...;
+local _, BS     = ...;
 
-local API   = BS.API
-local DB    = BS.DB
+local API       = BS.API
+local DB        = BS.DB
+local Tickers   = BS.Tickers
+local Events    = BS.Events
 
 local FocusCastTracker = {
     name = "FocusCastTracker",
@@ -13,7 +15,7 @@ local FocusCastTracker = {
     events = {},
 }
 
-API:RegisterModule(FocusCastTracker)
+API:Register(FocusCastTracker)
 
 -------------------------------------------------
 -- Constants / Defaults
@@ -207,7 +209,7 @@ function FocusCastTracker:ClearCast()
         self.frame:SetAlpha(1.0)
         self.frame:Hide()
     end
-    self:StopTicker()
+    Tickers:Stop(self)
 end
 
 function FocusCastTracker:ReadFocusCast()
@@ -317,11 +319,11 @@ end
 -- Ticker (BS)
 -------------------------------------------------
 function FocusCastTracker:StartTicker()
-    BS:StopTicker(self)
+    Tickers:Stop(self)
     local interval = tonumber(self.db and self.db.updateInterval) or defaults.updateInterval
     if interval < 0.02 then interval = 0.02 end
 
-    BS:RegisterTicker(self, interval, function()
+    Tickers:Register(self, interval, function()
         if self.castInfo then
             local refreshed = self:ReadFocusCast()
             if not refreshed then
@@ -332,10 +334,6 @@ function FocusCastTracker:StartTicker()
         end
         self:Update()
     end)
-end
-
-function FocusCastTracker:StopTicker()
-    BS:StopTicker(self)
 end
 
 -------------------------------------------------
@@ -386,26 +384,28 @@ function FocusCastTracker:OnInit()
         if self.castInfo then
             self:StartTicker()
         else
-            self:StopTicker()
+            Tickers:Stop(self)
         end
         self:Update()
     else
         self:ClearCast()
     end
 
-    BS:RegisterEvent("PLAYER_FOCUS_CHANGED")
-    BS:RegisterEvent("UNIT_SPELLCAST_START")
-    BS:RegisterEvent("UNIT_SPELLCAST_STOP")
-    BS:RegisterEvent("UNIT_SPELLCAST_FAILED")
-    BS:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
-    BS:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-    BS:RegisterEvent("UNIT_SPELLCAST_DELAYED")
-    BS:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
-    BS:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
-    BS:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
-    BS:RegisterEvent("PLAYER_TALENT_UPDATE")
-    BS:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-    BS:RegisterEvent("PLAYER_REGEN_ENABLED")
+    local f = Events.Create()
+
+    f:RegisterEvent("PLAYER_FOCUS_CHANGED")
+    f:RegisterEvent("UNIT_SPELLCAST_START")
+    f:RegisterEvent("UNIT_SPELLCAST_STOP")
+    f:RegisterEvent("UNIT_SPELLCAST_FAILED")
+    f:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+    f:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    f:RegisterEvent("UNIT_SPELLCAST_DELAYED")
+    f:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
+    f:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+    f:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
+    f:RegisterEvent("PLAYER_TALENT_UPDATE")
+    f:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+    f:RegisterEvent("PLAYER_REGEN_ENABLED")
 end
 
 -------------------------------------------------
@@ -418,7 +418,7 @@ FocusCastTracker.events.PLAYER_FOCUS_CHANGED = function(self)
     if self.castInfo then
         self:StartTicker()
     else
-        self:StopTicker()
+        Tickers:Stop(self)
     end
     self:Update()
 end
@@ -431,7 +431,7 @@ local function HandleFocusCastEvent(self, unit)
     if self.castInfo then
         self:StartTicker()
     else
-        self:StopTicker()
+        Tickers:Stop(self)
     end
     self:Update()
 end

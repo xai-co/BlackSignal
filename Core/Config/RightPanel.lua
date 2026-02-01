@@ -8,7 +8,7 @@ BS.RightPanel       = {}
 local RightPanel    = BS.RightPanel
 
 local UI    = BS.UI
-local UTILS = BS.UTILS
+local UTILS = BS.Utils
 
 local LEFT_GAP = 12 -- Gap between left and right panels
 

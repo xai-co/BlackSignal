@@ -3,7 +3,7 @@ local _, BS = ...
 
 local DB    = BS.DB
 local UI    = BS.UI
-local UTILS = BS.UTILS
+local UTILS = BS.Utils
 
 if not DB or not UI then
     error("BS: Missing Core/DB.lua or Core/UI.lua. Check .toc load order (DB.lua, UI.lua, then Config.lua).")

@@ -2,10 +2,11 @@
 -- @module EnemyCastList
 -- @alias EnemyCastList
 
-local _, BS = ...;
+local _, BS     = ...;
 
-local API   = BS.API
-local DB    = BS.DB
+local API       = BS.API
+local DB        = BS.DB
+local Tickers   = BS.Tickers
 
 local EnemyCastList = {
     name = "EnemyCastList",
@@ -13,7 +14,7 @@ local EnemyCastList = {
     events = {},
 }
 
-API:RegisterModule(EnemyCastList)
+API:Register(EnemyCastList)
 
 -------------------------------------------------
 -- Constants / Defaults
@@ -402,18 +403,14 @@ end
 -- Ticker
 -------------------------------------------------
 function EnemyCastList:StartTicker()
-    BS:StopTicker(self)
+    Tickers:Stop(self)
     local interval = tonumber(self.db and self.db.updateInterval) or defaults.updateInterval
     if interval < 0.02 then interval = 0.02 end
 
-    BS:RegisterTicker(self, interval, function()
+    Tickers:Register(self, interval, function()
         self:RefreshAll()
         self:Update()
     end)
-end
-
-function EnemyCastList:StopTicker()
-    BS:StopTicker(self)
 end
 
 -------------------------------------------------
@@ -431,7 +428,7 @@ function EnemyCastList:ApplyOptions()
         self:Update()
     else
         if self.frame then self.frame:Hide() end
-        self:StopTicker()
+        Tickers:Stop(self)
     end
 end
 
@@ -458,7 +455,7 @@ function EnemyCastList:OnInit()
         self:Update()
     else
         self.frame:Hide()
-        self:StopTicker()
+        Tickers:Stop(self)
     end
 
     self:EnsureEventFrame()
