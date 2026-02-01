@@ -1,10 +1,21 @@
 -- LeftPanel.lua
+-- @module LeftPanel
+-- @alias LeftPanel
 local _, BS = ...
-BS.LeftPanel = BS.LeftPanel or {}
 
+BS.LeftPanel    = BS.LeftPanel or {}
 local LeftPanel = BS.LeftPanel
-local WIDTH = 235
 
+local WIDTH         = 235 -- Panel width
+local BUTTON_H      = 26  -- Button height
+local BUTTON_GAP    = 6   -- Gap between buttons
+local BUTTON_PAD    = 5   -- Button padding
+
+
+--- Get an ordered list of modules from the modules table
+--- @local
+--- @param modulesTable table The table containing module data
+--- @return table table The ordered list of modules
 local function OrderedModules(modulesTable)
     local list = {}
     if type(modulesTable) ~= "table" then return list end
@@ -30,6 +41,11 @@ local function OrderedModules(modulesTable)
     return list
 end
 
+
+--- Create the left panel for module selection
+--- @param parent Frame table The parent frame to attach the left panel
+--- @param onClick function The callback function when a module button is clicked
+--- @return frame Frame The created left panel frame
 function LeftPanel:Create(parent, onClick)
     local panel = CreateFrame("Frame", "BSLeftPanel", parent, "BackdropTemplate")
     panel:SetPoint("TOPLEFT", parent, "TOPLEFT", 14, -58)
@@ -42,17 +58,14 @@ function LeftPanel:Create(parent, onClick)
     panel._bsModules = OrderedModules(BS.API and BS.API.modules)
 
     local y = -8
-    local btnGap = 6
-    local btnH = 26
-    local btnPad = 5
 
     for _, m in ipairs(panel._bsModules) do
         m.db = m.db or BS.DB:EnsureDB(m.name, m.defaults or { enabled = true })
         if m.enabled == nil then m.enabled = m.db.enabled end
 
-        local btn = BS.Button:Create(nil, panel, 1, btnH, m.name, "TOPLEFT", panel, "TOPLEFT", btnPad, y)
-        btn:SetPoint("TOPLEFT", panel, "TOPLEFT", btnPad, y)
-        btn:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -btnPad, y)
+        local btn = BS.Button:Create(nil, panel, 1, BUTTON_H, m.name, "TOPLEFT", panel, "TOPLEFT", BUTTON_PAD, y)
+        btn:SetPoint("TOPLEFT", panel, "TOPLEFT", BUTTON_PAD, y)
+        btn:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -BUTTON_PAD, y)
 
         if not btn.SetActive then
             function btn:SetActive(isActive)
@@ -71,9 +84,12 @@ function LeftPanel:Create(parent, onClick)
         end)
 
         panel._bsButtons[m.name] = btn
-        y = y - (btnH + btnGap)
+        y = y - (BUTTON_H + BUTTON_GAP)
     end
 
+    --- Set the active module button
+    --- @local
+    --- @param name string The module name to set as active
     function panel:SetActive(name)
         for n, b in pairs(self._bsButtons) do
             if b and b.SetActive then
@@ -82,6 +98,9 @@ function LeftPanel:Create(parent, onClick)
         end
     end
 
+    --- Get the first module in the list
+    --- @local
+    --- @return table table The first module data
     function panel:GetFirstModule()
         return self._bsModules and self._bsModules[1]
     end
