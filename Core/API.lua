@@ -1,15 +1,23 @@
 -- Core/API.lua
-local _, BS = ...;
-BS.API = {}
+-- @module API
+-- @alias API
 
-local API = BS.API
+local _, BS = ...;
+
+BS.API      = {}
+local API   = BS.API
 API.modules = {}
 
+--- Register a module with the API
+--- @param module table The module to register
+--- @return nil
 function API:Register(module)
   if type(module) ~= "table" or not module.name then return end
   self.modules[module.name] = module
 end
 
+--- Load and initialize all registered modules
+--- @return nil
 function API:Load()
   local _, class = UnitClass("player")
 

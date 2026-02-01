@@ -1,5 +1,9 @@
 -- Modules/Shimmer.lua
+-- @module Shimmer
+-- @alias Shimmer
+
 local _, BS = ...;
+
 
 local Shimmer = {
   name = "Shimmer",
@@ -60,6 +64,9 @@ end
 -------------------------------------------------
 -- Spell selection
 -------------------------------------------------
+--- Resolve which spell ID to use based on talents
+--- @return nil
+-------------------------------------------------
 function Shimmer:ResolveSpell()
   if C_SpellBook.IsSpellKnown(SHIMMER_ID) then
     self.spellID = SHIMMER_ID
@@ -70,6 +77,9 @@ end
 
 -------------------------------------------------
 -- Update
+-------------------------------------------------
+--- Update the shimmer display
+--- @return nil
 -------------------------------------------------
 function Shimmer:Update()
   if not self.db or self.db.enabled == false then return end
@@ -98,6 +108,9 @@ end
 
 -------------------------------------------------
 -- Ticker
+-------------------------------------------------
+--- Start the update ticker
+--- @return nil
 -------------------------------------------------
 function Shimmer:StartTicker()
   BS.Tickers:Stop(self)
