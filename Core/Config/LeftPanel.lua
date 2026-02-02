@@ -7,7 +7,7 @@ BS.LeftPanel    = BS.LeftPanel or {}
 local LeftPanel = BS.LeftPanel
 
 local WIDTH         = 235 -- Panel width
-local BUTTON_H      = 26  -- Button height
+local BUTTON_H      = 50  -- Button height
 local BUTTON_GAP    = 6   -- Gap between buttons
 local BUTTON_PAD    = 5   -- Button padding
 
@@ -63,7 +63,7 @@ function LeftPanel:Create(parent, onClick)
         m.db = m.db or BS.DB:EnsureDB(m.name, m.defaults or { enabled = true })
         if m.enabled == nil then m.enabled = m.db.enabled end
 
-        local btn = BS.Button:Create(nil, panel, 1, BUTTON_H, m.name, "TOPLEFT", panel, "TOPLEFT", BUTTON_PAD, y)
+        local btn = BS.Button:CreateNav(nil, panel, 1, BUTTON_H, m.name, "TOPLEFT", panel, "TOPLEFT", BUTTON_PAD, y)
         btn:SetPoint("TOPLEFT", panel, "TOPLEFT", BUTTON_PAD, y)
         btn:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -BUTTON_PAD, y)
 
