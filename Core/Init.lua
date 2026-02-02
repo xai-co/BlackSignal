@@ -1,4 +1,4 @@
 -- Core/Init.lua
-local NAME, _ = ...;
+local _, _ = ...;
 
-DEFAULT_CHAT_FRAME:AddMessage(NAME .. " loaded. Type /bs for options.")
+DEFAULT_CHAT_FRAME:AddMessage("|cff7f3fbfBlackSignal|r" .. " loaded. Type /bs for options.")
