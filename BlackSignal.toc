@@ -33,3 +33,4 @@ Modules/FocusCastTracker/FocusCastTracker.lua
 Modules/MouseRing/MouseRing.lua
 Modules/EnemyCastList/EnemyCastList.lua
 Modules/TeleportButtons/TeleportButtons.lua
+Modules/CombatTime/CombatTime.lua
