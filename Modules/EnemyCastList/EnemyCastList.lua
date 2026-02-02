@@ -10,7 +10,7 @@ local Tickers   = BS.Tickers
 
 local EnemyCastList = {
     name    = "BS_ECL",
-    label   = "EnemyCastList",
+    label   = "Enemy Cast List",
     enabled = true,
     events  = {},
 }

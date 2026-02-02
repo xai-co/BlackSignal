@@ -2,12 +2,12 @@
 -- @module FocusCastTracker
 -- @alias FocusCastTracker
 
-local _, BS     = ...;
+local _, BS            = ...
 
-local API       = BS.API
-local DB        = BS.DB
-local Tickers   = BS.Tickers
-local Events    = BS.Events
+local API              = BS.API
+local DB               = BS.DB
+local Tickers          = BS.Tickers
+local Events           = BS.Events
 
 local FocusCastTracker = {
     name    = "BS_FCT",
@@ -24,29 +24,22 @@ API:Register(FocusCastTracker)
 local FONT = "Fonts\\FRIZQT__.TTF"
 
 local defaults = {
-    enabled = true,
-    x = 0,
-    y = -120,
-    fontSize = 16,
-    font = FONT,
+    enabled                 = true,
+    x                       = 0,
+    y                       = 200,
+    fontSize                = 16,
+    font                    = FONT,
 
-    text = "",
+    text                    = "",
 
-    updateInterval = 0.05,
+    updateInterval          = 0.05,
 
-    debugAlwaysShow = false,
-    onlyShowIfKickReady = true,
-
-    kickSpellIdOverride = nil,
-
-    alphaReady = 1.0,
-    alphaNotReady = 0,
+    onlyShowIfKickReady     = true,
 }
 
 FocusCastTracker.defaults = defaults
-function FocusCastTracker:BuildDefaults()
-    return defaults
-end
+
+local GetSpellCooldown = C_Spell.GetSpellCooldown
 
 local KICK_BY_CLASS = {
     WARRIOR     = 6552,   -- Pummel
@@ -61,29 +54,6 @@ local KICK_BY_CLASS = {
     MONK        = 116705, -- Spear Hand Strike
     WARLOCK     = 19647,  -- Spell Lock
     EVOKER      = 351338, -- Quell
-}
-
--- Base cooldowns
-local KICK_BASE_CD = {
-    [6552]   = 15, -- Pummel
-    [1766]   = 15, -- Kick
-    [2139]   = 25, -- Counterspell
-    [147362] = 24, -- Counter Shot
-    [57994]  = 12, -- Wind Shear
-    [106839] = 15, -- Skull Bash
-    [96231]  = 15, -- Rebuke
-    [47528]  = 15, -- Mind Freeze
-    [183752] = 15, -- Disrupt
-    [116705] = 15, -- Spear Hand Strike
-    [19647]  = 24, -- Spell Lock
-    [351338] = 40, -- Quell
-}
-
-local KICK_TALENT_MODIFIERS = {
-    -- MAGE: Counterspell
-    [2139] = {
-        { talentSpellId = 382297, delta = -5 },
-    },
 }
 
 -------------------------------------------------
@@ -103,7 +73,7 @@ local function EnsureUI(self)
     t:SetTextColor(1, 1, 1, 1)
 
     self.frame = f
-    self.text = t
+    self.text  = t
 end
 
 local function ApplyPosition(self)
@@ -119,7 +89,7 @@ local function ApplyFont(self)
 end
 
 -------------------------------------------------
--- Target class color helpers
+-- Helpers
 -------------------------------------------------
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
@@ -150,111 +120,96 @@ local function GetUnitNameColoredByClass(unit)
 end
 
 local function GetFocusTargetName()
-    if UnitExists("focus-target") then
-        return GetUnitNameColoredByClass("focus-target")
+    -- IMPORTANT: correct unit token is "focustarget"
+    if UnitExists("focustarget") then
+        return GetUnitNameColoredByClass("focustarget")
     end
     return nil
 end
 
--------------------------------------------------
--- Kick cooldown computation (base + talent constants)
--------------------------------------------------
-function FocusCastTracker:GetKickSpellId()
-    if self.db and self.db.kickSpellIdOverride then
-        return self.db.kickSpellIdOverride
-    end
-
+local function GetKickId()
     local _, class = UnitClass("player")
     return class and KICK_BY_CLASS[class] or nil
 end
 
-function FocusCastTracker:GetKickTalentModifier(spellId)
-    local mods = KICK_TALENT_MODIFIERS[spellId]
-    if not mods then return 0 end
+local function IsKickReady(spellID)
+    local cdInfo = GetSpellCooldown(spellID)
+    local isOnGCD = cdInfo and cdInfo.isOnGCD
 
-    local total = 0
-    for _, m in ipairs(mods) do
-        -- IsPlayerSpell suele ser seguro y NO devuelve secret; aun así, lo uso directo
-        if m and m.talentSpellId and IsPlayerSpell(m.talentSpellId) then
-            total = total + (m.delta or 0)
-        end
-    end
-    return total
+    return isOnGCD
 end
 
-function FocusCastTracker:RecomputeKickCooldown()
-    local spellId = self:GetKickSpellId()
-    if not spellId then
-        self.kickCooldownSeconds = nil
+-------------------------------------------------
+-- Spell selection
+-------------------------------------------------
+function FocusCastTracker:ResolveSpell()
+    local kickId = GetKickId()
+    if not kickId then
+        self.spellID = nil
         return
     end
 
-    local base = KICK_BASE_CD[spellId]
-    if not base then
-        self.kickCooldownSeconds = nil
-        return
+    -- C_SpellBook.IsSpellKnown can be nil in some edge environments; guard it.
+    if C_SpellBook and C_SpellBook.IsSpellKnown then
+        if C_SpellBook.IsSpellKnown(kickId) then
+            self.spellID = kickId
+        else
+            self.spellID = nil
+        end
+    else
+        -- fallback: assume available if we have an id (worst case it'll just be "not ready")
+        self.spellID = kickId
     end
-
-    local mod = self:GetKickTalentModifier(spellId)
-    local cd = base + mod
-    if cd < 0 then cd = 0 end
-    self.kickCooldownSeconds = cd
 end
 
 -------------------------------------------------
 -- Cast state
 -------------------------------------------------
-function FocusCastTracker:ClearCast()
-    self.castInfo = nil
-    if self.frame then
-        self.frame:SetAlpha(1.0)
-        self.frame:Hide()
-    end
-    Tickers:Stop(self)
-end
-
 function FocusCastTracker:ReadFocusCast()
     if not UnitExists("focus") then
+        self.castInfo = nil
         return nil
     end
 
     local name, _, _, _, _, _, _, _, spellId = UnitCastingInfo("focus")
 
     if not name then
+        -- also consider channels
+        name, _, _, _, _, _, _, _, _, spellId = UnitChannelInfo("focus")
+    end
+
+    if not name then
+        self.castInfo = nil
         return nil
     end
 
-    return {
-        name = name,
-        spellId = spellId,
-        targetName = GetFocusTargetName(),
+    local info = {
+        name             = name,
+        spellId          = spellId,
+        targetName       = GetFocusTargetName(),
     }
+
+    self.castInfo = info
+    return info
 end
 
-function FocusCastTracker:ShouldShowForCurrentState()
-    if not self.db or self.db.enabled == false then return false end
-    if not self.castInfo then return false end
-    return true
+function FocusCastTracker:ClearCast()
+    self.castInfo = nil
+    if self.text then
+        self.text:SetText("")
+    end
 end
 
 -------------------------------------------------
--- Kick ready logic
+-- Ticker (BS)
 -------------------------------------------------
-function FocusCastTracker:IsKickReadySoft()
-    if not (self.db and self.db.onlyShowIfKickReady) then
-        return true
-    end
-
-    local cd = self.kickCooldownSeconds
-    if not cd then
-        return false
-    end
-
-    if not self.lastKickAt then
-        return true
-    end
-
-    return (GetTime() - self.lastKickAt) >= cd
+function FocusCastTracker:StartTicker()
+    BS.Tickers:Stop(self)
+    BS.Tickers:Register(self, tonumber(self.db.updateInterval) or 0.05, function()
+        -- Keep cast info fresh while ticker runs
+        self:ReadFocusCast()
+        self:Update()
+    end)
 end
 
 -------------------------------------------------
@@ -264,44 +219,21 @@ function FocusCastTracker:Update()
     if not self.db or self.db.enabled == false then return end
     if not self.frame or not self.text then return end
 
-    if self.db.debugAlwaysShow and not UnitExists("focus") then
-        self.frame:SetAlpha(1.0)
-        self.frame:Show()
-        self.text:SetText("Focus: no existe")
+    -- Nothing to show if no focus cast
+    if not self.castInfo or not self.castInfo.name then
+        self.frame:SetAlpha(0)
         return
     end
 
-    if not self.castInfo then
-        if self.db.debugAlwaysShow and UnitExists("focus") then
-            self.frame:SetAlpha(1.0)
-            self.frame:Show()
-            self.text:SetText("Focus: sin casteo")
-        else
-            self.frame:Hide()
-        end
-        return
-    end
-
-    if self:ShouldShowForCurrentState() ~= true then
-        if self.db.debugAlwaysShow and UnitExists("focus") then
-            self.frame:SetAlpha(1.0)
-            self.frame:Show()
-            self.text:SetText("Focus: casteando (estado inválido)")
-        else
-            self.frame:Hide()
-        end
-        return
-    end
+    local kickReady = IsKickReady(self.spellID)
 
     if self.db.onlyShowIfKickReady then
-        local ready = self:IsKickReadySoft()
-        local aReady = tonumber(self.db.alphaReady) or 1.0
-        local aNot = tonumber(self.db.alphaNotReady) or 0
-        self.frame:SetAlpha(ready and aReady or aNot)
+        self.frame:SetAlphaFromBoolean(kickReady ~= false, 1, 0)
     else
-        self.frame:SetAlpha(1.0)
+        self.frame:SetAlpha(1)
     end
 
+    -- Build message
     local msg
     if self.db.text and self.db.text ~= "" then
         msg = self.db.text
@@ -313,28 +245,6 @@ function FocusCastTracker:Update()
     end
 
     self.text:SetText(msg)
-    self.frame:Show()
-end
-
--------------------------------------------------
--- Ticker (BS)
--------------------------------------------------
-function FocusCastTracker:StartTicker()
-    Tickers:Stop(self)
-    local interval = tonumber(self.db and self.db.updateInterval) or defaults.updateInterval
-    if interval < 0.02 then interval = 0.02 end
-
-    Tickers:Register(self, interval, function()
-        if self.castInfo then
-            local refreshed = self:ReadFocusCast()
-            if not refreshed then
-                self:ClearCast()
-                return
-            end
-            self.castInfo = refreshed
-        end
-        self:Update()
-    end)
 end
 
 -------------------------------------------------
@@ -345,18 +255,26 @@ function FocusCastTracker:ApplyOptions()
     ApplyPosition(self)
     ApplyFont(self)
 
-    if not InCombatLockdown() then
-        self:RecomputeKickCooldown()
+    self.enabled = (self.db and self.db.enabled ~= false)
+
+    self.frame:SetShown(self.enabled)
+
+    if not self.enabled then
+        BS.Tickers:Stop(self)
+        self:ClearCast()
+        return
     end
 
-    if self.enabled then
-        if self.castInfo then
-            self:StartTicker()
-        end
-        self:Update()
+    self:ResolveSpell()
+    self:ReadFocusCast()
+
+    if self.castInfo then
+        self:StartTicker()
     else
-        self:ClearCast()
+        BS.Tickers:Stop(self)
     end
+
+    self:Update()
 end
 
 -------------------------------------------------
@@ -374,65 +292,35 @@ function FocusCastTracker:OnInit()
         BS.Movers:Register(self.frame, self.name, "Focus Cast Tracker")
     end
 
-    self.lastKickAt = nil
-    self.kickCooldownSeconds = nil
+    self:ResolveSpell()
+    self:ReadFocusCast()
 
-    if not InCombatLockdown() then
-        self:RecomputeKickCooldown()
-    end
-
-    self.castInfo = self:ReadFocusCast()
-    self:Update()
+    self.frame:SetShown(self.enabled)
 
     if self.enabled and self.castInfo then
         self:StartTicker()
     else
-        Tickers:Stop(self)
+        BS.Tickers:Stop(self)
     end
 
-    Events:RegisterEvent("PLAYER_ENTERING_WORLD")
+    self:Update()
+
+    Events:RegisterEvent("SPELL_UPDATE_COOLDOWN")
     Events:RegisterEvent("PLAYER_FOCUS_CHANGED")
-
-    if Events.RegisterUnitEvent then
-        Events:RegisterUnitEvent("UNIT_SPELLCAST_START", "focus")
-        Events:RegisterUnitEvent("UNIT_SPELLCAST_STOP", "focus")
-        Events:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", "focus")
-        Events:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", "focus")
-        Events:RegisterUnitEvent("UNIT_SPELLCAST_DELAYED", "focus")
-        Events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "focus")
-        Events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_STOP", "focus")
-        Events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_UPDATE", "focus")
-        Events:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player") 
-    else
-        Events:RegisterEvent("UNIT_SPELLCAST_START")
-        Events:RegisterEvent("UNIT_SPELLCAST_STOP")
-        Events:RegisterEvent("UNIT_SPELLCAST_FAILED")
-        Events:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
-        Events:RegisterEvent("UNIT_SPELLCAST_DELAYED")
-        Events:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
-        Events:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
-        Events:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
-        Events:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-    end
-
-    Events:RegisterEvent("PLAYER_TALENT_UPDATE")
-    Events:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-    Events:RegisterEvent("PLAYER_REGEN_ENABLED")
+    Events:RegisterUnitEvent("UNIT_SPELLCAST_START", "focus")
+    Events:RegisterUnitEvent("UNIT_SPELLCAST_STOP", "focus")
+    Events:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", "focus")
+    Events:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", "focus")
+    Events:RegisterUnitEvent("UNIT_SPELLCAST_DELAYED", "focus")
+    Events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "focus")
+    Events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_STOP", "focus")
+    Events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_UPDATE", "focus")
 end
-
 
 -------------------------------------------------
 -- Events (BS dispatcher)
 -------------------------------------------------
-FocusCastTracker.events.PLAYER_FOCUS_CHANGED = function(self)
-    if not self.enabled then return end
-    self.castInfo = self:ReadFocusCast()
-
-    if self.castInfo then
-        self:StartTicker()
-    else
-        Tickers:Stop(self)
-    end
+FocusCastTracker.events.SPELL_UPDATE_COOLDOWN = function(self)
     self:Update()
 end
 
@@ -440,74 +328,44 @@ local function HandleFocusCastEvent(self, unit)
     if unit ~= "focus" then return end
     if not self.enabled then return end
 
-    self.castInfo = self:ReadFocusCast()
-    if self.castInfo then
+    local info = self:ReadFocusCast()
+    if info then
         self:StartTicker()
     else
         Tickers:Stop(self)
+        self:ClearCast()
     end
+
     self:Update()
 end
 
-FocusCastTracker.events.UNIT_SPELLCAST_START = HandleFocusCastEvent
-FocusCastTracker.events.UNIT_SPELLCAST_STOP = HandleFocusCastEvent
-FocusCastTracker.events.UNIT_SPELLCAST_FAILED = HandleFocusCastEvent
-FocusCastTracker.events.UNIT_SPELLCAST_INTERRUPTED = HandleFocusCastEvent
-FocusCastTracker.events.UNIT_SPELLCAST_DELAYED = HandleFocusCastEvent
-FocusCastTracker.events.UNIT_SPELLCAST_CHANNEL_START = HandleFocusCastEvent
-FocusCastTracker.events.UNIT_SPELLCAST_CHANNEL_STOP = HandleFocusCastEvent
+local function TalentUpdate(self)
+    C_Timer.After(0.5, function()
+        self:ResolveSpell()
+    end)
+    C_Timer.After(0.6, function()
+        if self.enabled then
+            -- if there's an active cast keep ticker, otherwise stop it
+            self:ReadFocusCast()
+            if self.castInfo then
+                self:StartTicker()
+            else
+                Tickers:Stop(self)
+            end
+            self:Update()
+        end
+    end)
+end
+
+FocusCastTracker.events.PLAYER_FOCUS_CHANGED          = HandleFocusCastEvent
+FocusCastTracker.events.PLAYER_SPECIALIZATION_CHANGED = TalentUpdate
+FocusCastTracker.events.TRAIT_CONFIG_UPDATED          = TalentUpdate
+FocusCastTracker.events.ACTIVE_TALENT_GROUP_CHANGED   = TalentUpdate
+FocusCastTracker.events.UNIT_SPELLCAST_START          = HandleFocusCastEvent
+FocusCastTracker.events.UNIT_SPELLCAST_STOP           = HandleFocusCastEvent
+FocusCastTracker.events.UNIT_SPELLCAST_FAILED         = HandleFocusCastEvent
+FocusCastTracker.events.UNIT_SPELLCAST_INTERRUPTED    = HandleFocusCastEvent
+FocusCastTracker.events.UNIT_SPELLCAST_DELAYED        = HandleFocusCastEvent
+FocusCastTracker.events.UNIT_SPELLCAST_CHANNEL_START  = HandleFocusCastEvent
+FocusCastTracker.events.UNIT_SPELLCAST_CHANNEL_STOP   = HandleFocusCastEvent
 FocusCastTracker.events.UNIT_SPELLCAST_CHANNEL_UPDATE = HandleFocusCastEvent
-
-FocusCastTracker.events.UNIT_SPELLCAST_SUCCEEDED = function(self, unit, castGUID, spellId)
-    if unit == "focus" then
-        HandleFocusCastEvent(self, unit)
-        return
-    end
-
-    if unit ~= "player" then return end
-    if not self.enabled then return end
-    if not self.db.onlyShowIfKickReady then return end
-
-    local kickId = self:GetKickSpellId()
-    if kickId and spellId == kickId then
-        self.lastKickAt = GetTime()
-        self:Update()
-    end
-end
-
-FocusCastTracker.events.PLAYER_TALENT_UPDATE = function(self)
-    if not self.enabled then return end
-    if InCombatLockdown() then return end
-    self:RecomputeKickCooldown()
-    if self.castInfo then
-        self:Update()
-    end
-end
-
-FocusCastTracker.events.PLAYER_SPECIALIZATION_CHANGED = function(self)
-    if not self.enabled then return end
-    if InCombatLockdown() then return end
-    self:RecomputeKickCooldown()
-    if self.castInfo then
-        self:Update()
-    end
-end
-
-FocusCastTracker.events.PLAYER_REGEN_ENABLED = function(self)
-    if not self.enabled then return end
-    self:RecomputeKickCooldown()
-    if self.castInfo then
-        self:Update()
-    end
-end
-
-FocusCastTracker.events.PLAYER_ENTERING_WORLD = function(self)
-    if not self.enabled then return end
-    self.castInfo = self:ReadFocusCast()
-    if self.castInfo then
-        self:StartTicker()
-    else
-        Tickers:Stop(self)
-    end
-    self:Update()
-end
