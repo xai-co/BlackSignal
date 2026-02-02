@@ -14,15 +14,50 @@ local function showPopup(r, g, b, a, callback)
         if callback then callback(nr, ng, nb, na) end
     end
 
+    -- Cache del último opacity real reportado por el picker (0..1).
+    -- En el color picker moderno, este es el valor fiable.
+    -- local lastOpacity = 1 - a
+
+    --- @return number nr
+    --- @return number ng
+    --- @return number nb
+    --- @return number na Alpha 0..1
     local function GetPickedRGBA()
         local nr, ng, nb = ColorPickerFrame:GetColorRGB()
-        ---@diagnostic disable-next-line: undefined-global
-        local opacity = (OpacitySliderFrame and OpacitySliderFrame:GetValue()) or 0 -- 0..1
-        local na = 1 - opacity
+
+        -- 1) Retail moderno: si existe GetColorAlpha, úsalo (alpha directo 0..1)
+        if ColorPickerFrame.GetColorAlpha then
+            local na = ColorPickerFrame:GetColorAlpha()
+            return nr, ng, nb, na
+        end
+
+        -- 2) Si no hay GetColorAlpha, intenta usar el cache lastOpacity (opacity 0..1)
+        -- local opacity = lastOpacity
+
+        -- 3) Fallback: algunos pickers siguen manteniendo ColorPickerFrame.opacity (opacity 0..1)
+        if ColorPickerFrame.opacity ~= nil then
+            opacity = tonumber(ColorPickerFrame.opacity) or opacity
+        end
+
+        -- 4) Classic fallback: slider (opacity 0..1). OJO: puede no existir en retail.
+        if OpacitySliderFrame and OpacitySliderFrame.GetValue then
+            local v = tonumber(OpacitySliderFrame:GetValue())
+            if v ~= nil then opacity = v end
+        end
+
+        local na = 1 - (tonumber(opacity) or 0)
         return nr, ng, nb, na
     end
 
-    local function OnChanged()
+    local function OnChanged(...)
+        -- En retail, opacityFunc suele llamar con (opacity) o args similares.
+        -- Nos quedamos con el primer número válido que venga.
+        local o = ...
+        o = tonumber(o)
+        if o ~= nil then
+            lastOpacity = o
+        end
+
         Fire(GetPickedRGBA())
     end
 
@@ -35,12 +70,15 @@ local function showPopup(r, g, b, a, callback)
         end
     end
 
+    -- Retail / moderno
     if ColorPickerFrame and ColorPickerFrame.SetupColorPickerAndShow then
+        -- lastOpacity = 1 - a
+
         ColorPickerFrame:SetupColorPickerAndShow({
             r = r,
             g = g,
             b = b,
-            opacity = 1 - a,
+            opacity = lastOpacity,  -- opacity 0..1
             hasOpacity = true,
 
             swatchFunc  = OnChanged,
@@ -53,7 +91,8 @@ local function showPopup(r, g, b, a, callback)
     -- Classic fallback
     ColorPickerFrame:SetColorRGB(r, g, b)
     ColorPickerFrame.hasOpacity = true
-    ColorPickerFrame.opacity = 1 - a
+    ColorPickerFrame.opacity =  a
+    -- lastOpacity = ColorPickerFrame.opacity
 
     ColorPickerFrame.func = OnChanged
     ColorPickerFrame.opacityFunc = OnChanged
@@ -61,6 +100,7 @@ local function showPopup(r, g, b, a, callback)
 
     ColorPickerFrame:Show()
 end
+
 
 
 function ColorPicker:Create(parent, w, h, point, relativeTo, relativePoint, x, y, getFunc, setFunc, tooltipText)
