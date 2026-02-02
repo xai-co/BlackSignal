@@ -35,7 +35,7 @@ local defaults = {
     font           = "Fonts\\FRIZQT__.TTF",
 
     -- Behavior
-    updateInterval = 0.1,  -- ticker rate
+    updateInterval = 1,  -- ticker rate
 
     -- Persistence
     persistTotal   = true, -- store total combat time across sessions
