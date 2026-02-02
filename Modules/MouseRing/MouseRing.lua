@@ -1,10 +1,10 @@
 -- Modules/MouseRing.lua
 -- @module MouseRing
 -- @alias MouseRing
-local _, BS     = ...;
 
-local DB        = BS.DB
-local API       = BS.API
+local _, BS = ...
+local DB    = BS.DB
+local API   = BS.API
 
 local MouseRing = {
     name    = "BS_CR",
@@ -15,60 +15,88 @@ local MouseRing = {
 
 API:Register(MouseRing)
 
-local x = 0
-local y = 0
 -------------------------------------------------
 -- Defaults (para que Core/Config lo “entienda”)
 -------------------------------------------------
 local defaults = {
     enabled     = true,
-    -- Mouse ring settings
+
     ringEnabled = true,
     size        = 48,
-    ringAlpha   = 0.9,
+
+    ringAlpha   = 0.9, -- 0..1
+
+    -- 0..1
     ringColorR  = 0,
     ringColorG  = 1,
     ringColorB  = 0,
+
     thickness   = 20, -- 10/20/30/40 (px)
-    --Para añadir el colorPicker en el panel de configuración
+
+    -- Para añadir el colorPicker en el panel de configuración
     colorPicker = true,
+
+    -- optional offsets (your code was using them but they weren't in defaults)
+    x = 0,
+    y = 0,
 }
 
 MouseRing.defaults = defaults
 
+-------------------------------------------------
+-- Helpers
+-------------------------------------------------
+local function Clamp(v, minV, maxV)
+    if v < minV then return minV end
+    if v > maxV then return maxV end
+    return v
+end
+
+local function ToNumber(v, fallback)
+    v = tonumber(v)
+    if v == nil then return fallback end
+    return v
+end
+
+local function Clamp01(v)
+    return Clamp(v, 0, 1)
+end
+
 local function GetRingTexturePath(mdb)
-    local thickness = tonumber(mdb.thickness) or 20
+    local thickness = ToNumber(mdb.thickness, 20)
     if thickness ~= 10 and thickness ~= 20 and thickness ~= 30 and thickness ~= 40 then
         thickness = 20
     end
-
     return string.format("Interface\\AddOns\\BlackSignal\\Media\\Ring_%dpx.tga", thickness)
 end
 
+-------------------------------------------------
+-- Core
+-------------------------------------------------
 function MouseRing:ApplySettings()
     if not self.frame or not self.texture or not self.db then return end
+    local mdb = self.db
 
-    local mdb   = self.db
+    local size  = Clamp(ToNumber(mdb.size, 48), 12, 256)
+    local alpha = Clamp01(ToNumber(mdb.ringAlpha, 1))
 
-    local size  = tonumber(mdb.size) or 48
-    local alpha = tonumber(mdb.ringAlpha) or 1
-
-    if size < 12 then size = 12 end
-    if size > 256 then size = 256 end
-    if alpha < 0 then alpha = 0 end
-    if alpha > 1 then alpha = 1 end
-
-    local r = tonumber(mdb.ringColorR); if r == nil then r = 0 end
-    local g = tonumber(mdb.ringColorG); if g == nil then g = 1 end
-    local b = tonumber(mdb.ringColorB); if b == nil then b = 0 end
-
-    if r < 0 then r = 0 elseif r > 1 then r = 1 end
-    if g < 0 then g = 0 elseif g > 1 then g = 1 end
-    if b < 0 then b = 0 elseif b > 1 then b = 1 end
+    local r = Clamp01(ToNumber(mdb.ringColorR, 0))
+    local g = Clamp01(ToNumber(mdb.ringColorG, 1))
+    local b = Clamp01(ToNumber(mdb.ringColorB, 0))
 
     self.frame:SetSize(size, size)
-    self.texture:SetTexture(GetRingTexturePath(mdb))
-    self.texture:SetVertexColor(r, g, b, alpha)
+
+    local path = GetRingTexturePath(mdb)
+    self.texture:SetTexture(path)
+
+    -- IMPORTANT:
+    -- "ADD" makes black invisible. Use "BLEND" so (0,0,0,alpha) still renders.
+    -- If you *really* wanted additive glow, you'd need a non-black texture/color.
+    self.texture:SetBlendMode("BLEND")
+
+    -- Apply color + alpha predictably
+    self.texture:SetVertexColor(r, g, b)
+    self.texture:SetAlpha(alpha)
 end
 
 function MouseRing:Update()
@@ -85,11 +113,9 @@ end
 
 function MouseRing:OnInit()
     self.db = DB:EnsureDB(self.name, defaults)
-
     self.enabled = (self.db.enabled ~= false)
 
     if self.__initialized and self.frame then
-        -- Reload / reinit seguro
         self:Update()
         return
     end
@@ -101,27 +127,34 @@ function MouseRing:OnInit()
 
     local tex = ring:CreateTexture(nil, "OVERLAY")
     tex:SetAllPoints()
-    tex:SetBlendMode("ADD")
+
+    -- NOTE: Blend mode is set in ApplySettings()
 
     self.frame = ring
     self.texture = tex
 
-    -- Seguir cursor (mientras está visible)
+    -- Follow cursor (while visible)
+    ring:ClearAllPoints()
+    ring:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+
     ring:SetScript("OnUpdate", function()
         if not ring:IsShown() then return end
 
-        local x, y = GetCursorPosition()
-        local scale = UIParent:GetEffectiveScale()
+        local cx, cy = GetCursorPosition()
+        local scale  = UIParent:GetEffectiveScale()
 
-        -- Offset opcional usando db.x/db.y (por si quieres)
-        local ox = tonumber(self.db.x) or 0
-        local oy = tonumber(self.db.y) or 0
+        local ox = ToNumber(self.db.x, 0)
+        local oy = ToNumber(self.db.y, 0)
 
         ring:ClearAllPoints()
-        ring:SetPoint("CENTER", UIParent, "BOTTOMLEFT", (x / scale) + ox, (y / scale) + oy)
+        ring:SetPoint("CENTER", UIParent, "BOTTOMLEFT", (cx / scale) + ox, (cy / scale) + oy)
     end)
 
-    -- Ticker ligero para show/hide y settings
+    -- Light ticker for show/hide + settings
+    if self.ticker then
+        self.ticker:Cancel()
+        self.ticker = nil
+    end
     self.ticker = C_Timer.NewTicker(0.10, function()
         self:Update()
     end)
