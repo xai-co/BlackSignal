@@ -327,25 +327,6 @@ local function CreateModuleContent(parent, module)
         lastAnchor = lbl
     end
 
-    -- Optional controls (tu lógica original)
-    if module.db.updateInterval ~= nil then
-        local lbl = UI:CreateText(f, "Update Interval (s):", "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0, -14,
-            "GameFontHighlight")
-        local eb = BS.EditBox:Create("ConfigUpdateIntervalBox", f, 70, 20, "", "LEFT", lbl, "RIGHT", 10, 0)
-        eb:SetText(tostring(module.db.updateInterval or 1.0))
-        eb:SetScript("OnEnterPressed", function(self)
-            local v = tonumber(self:GetText())
-            if v and v >= 0.01 and v <= 10 then
-                module.db.updateInterval = v
-                if module.StopTicker then module:StopTicker() end
-                if module.StartTicker then module:StartTicker() end
-                ApplyModuleExtra(module)
-            end
-            self:ClearFocus()
-        end)
-        lastAnchor = lbl
-    end
-
     if module.db.thickness ~= nil and UI.CreateDropdown then
         local lbl = UI:CreateText(f, "Thickness:", "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0, -14, "GameFontHighlight")
         local thicknessItems = {
