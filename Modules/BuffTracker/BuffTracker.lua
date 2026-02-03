@@ -174,6 +174,61 @@ function BuffTracker:OnInit()
     self:Update()
 end
 
+function BuffTracker:OnDisabled()
+    -- Refresh DB and force disabled
+    self.db = BS.DB:EnsureDB(self.name, defaults)
+    self.enabled = false
+    if self.db then self.db.enabled = false end
+
+    -- Cancel timers
+    if self._readyCheckTimer then
+        self._readyCheckTimer:Cancel()
+        self._readyCheckTimer = nil
+    end
+    if self._talentTimer then
+        self._talentTimer:Cancel()
+        self._talentTimer = nil
+    end
+
+    -- Reset runtime state
+    self._inCombat        = false
+    self._inChallengeMode = false
+    self._inReadyCheck    = false
+
+    -- Unregister all events registered in OnInit
+    if Events and Events.UnregisterEvent then
+        Events:UnregisterEvent("PLAYER_ENTERING_WORLD")
+        Events:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
+        Events:UnregisterEvent("CHALLENGE_MODE_START")
+        Events:UnregisterEvent("CHALLENGE_MODE_RESET")
+        Events:UnregisterEvent("CHALLENGE_MODE_COMPLETED")
+        Events:UnregisterEvent("GROUP_ROSTER_UPDATE")
+        Events:UnregisterEvent("UNIT_AURA")
+        Events:UnregisterEvent("PLAYER_REGEN_ENABLED")
+        Events:UnregisterEvent("PLAYER_REGEN_DISABLED")
+        Events:UnregisterEvent("READY_CHECK")
+        Events:UnregisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+        Events:UnregisterEvent("TRAIT_CONFIG_UPDATED")
+        Events:UnregisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+    elseif Events and Events.UnregisterAllEventsFor then
+        -- Preferred if your Events wrapper is module-scoped
+        Events:UnregisterAllEventsFor(self)
+    end
+
+    -- Hide UI
+    if self.UI and self.UI.GetRootFrame then
+        local root = self.UI:GetRootFrame()
+        if root then
+            root:Hide()
+
+            -- Optional mover cleanup (only if expected on disable)
+            if BS and BS.Movers and BS.Movers.Unregister then
+                BS.Movers:Unregister(root, self.name)
+            end
+        end
+    end
+end
+
 -------------------------------------------------
 -- Events
 -------------------------------------------------

@@ -466,6 +466,41 @@ function EnemyCastList:OnInit()
     self:RegisterLocalEvent("NAME_PLATE_UNIT_REMOVED")
 end
 
+function EnemyCastList:OnDisabled()
+    -- Refresh DB and force disabled
+    self.db = DB:EnsureDB(self.name, defaults)
+    self.enabled = false
+    if self.db then self.db.enabled = false end
+
+    -- Stop ticker / updates
+    if Tickers and Tickers.Stop then
+        Tickers:Stop(self)
+    elseif BS and BS.Tickers and BS.Tickers.Stop then
+        BS.Tickers:Stop(self)
+    elseif self.StopTicker then
+        self:StopTicker()
+    end
+
+    -- Unregister local events registered in OnInit
+    if self.UnregisterAllLocalEvents then
+        self:UnregisterAllLocalEvents()
+    end
+
+    -- Hide + reset UI/state
+    if self.frame then
+        self.frame:Hide()
+    end
+    if self.Reset then
+        self:Reset()
+    end
+
+    -- Optional: mover cleanup (keep only if your movers system expects removal on disable)
+    if BS and BS.Movers and BS.Movers.Unregister and self.frame then
+        BS.Movers:Unregister(self.frame, self.name)
+    end
+end
+
+
 -------------------------------------------------
 -- Events
 -------------------------------------------------

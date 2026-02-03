@@ -162,3 +162,24 @@ function MouseRing:OnInit()
     self:ApplySettings()
     self:Update()
 end
+
+
+function MouseRing:OnDisabled()
+    self.db = DB:EnsureDB(self.name, defaults)
+    self.enabled = false
+    if self.db then self.db.enabled = false end
+
+    -- Stop ticker
+    if self.ticker then
+        self.ticker:Cancel()
+        self.ticker = nil
+    end
+
+    -- Hide UI immediately
+    if self.frame then
+        self.frame:Hide()
+
+        -- Optional: detach scripts to avoid any accidental work
+        self.frame:SetScript("OnUpdate", nil)
+    end
+end

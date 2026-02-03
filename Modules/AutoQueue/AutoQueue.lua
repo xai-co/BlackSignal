@@ -125,6 +125,23 @@ function AutoQueue:OnInit()
   end
 end
 
+function AutoQueue:OnDisabled()
+  -- Refresh DB + force disabled
+  self.db = DB:EnsureDB(self.name, self.defaults)
+  self.enabled = false
+  if self.db then self.db.enabled = false end
+
+  -- Unregister events and stop reacting
+  if self.eventFrame then
+    self.eventFrame:UnregisterAllEvents()
+  end
+
+  -- If you have any tickers/timers in this module, stop them (safe no-op)
+  if BS and BS.Tickers and BS.Tickers.Stop then
+    BS.Tickers:Stop(self)
+  end
+end
+
 -------------------------------------------------
 --- Apply configuration changes
 --- @return nil

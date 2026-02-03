@@ -317,6 +317,55 @@ function FocusCastTracker:OnInit()
     Events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_UPDATE", "focus")
 end
 
+function FocusCastTracker:OnDisabled()
+    -- Refresh DB and force disabled
+    self.db = DB:EnsureDB(self.name, defaults)
+    self.enabled = false
+    if self.db then self.db.enabled = false end
+
+    -- Stop ticker / periodic updates
+    if BS and BS.Tickers and BS.Tickers.Stop then
+        BS.Tickers:Stop(self)
+    elseif self.StopTicker then
+        self:StopTicker()
+    end
+
+    -- Unregister events registered in OnInit
+    if Events and Events.UnregisterEvent then
+        Events:UnregisterEvent("SPELL_UPDATE_COOLDOWN")
+        Events:UnregisterEvent("PLAYER_FOCUS_CHANGED")
+    end
+
+    if Events and Events.UnregisterUnitEvent then
+        Events:UnregisterUnitEvent("UNIT_SPELLCAST_START", "focus")
+        Events:UnregisterUnitEvent("UNIT_SPELLCAST_STOP", "focus")
+        Events:UnregisterUnitEvent("UNIT_SPELLCAST_FAILED", "focus")
+        Events:UnregisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", "focus")
+        Events:UnregisterUnitEvent("UNIT_SPELLCAST_DELAYED", "focus")
+        Events:UnregisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "focus")
+        Events:UnregisterUnitEvent("UNIT_SPELLCAST_CHANNEL_STOP", "focus")
+        Events:UnregisterUnitEvent("UNIT_SPELLCAST_CHANNEL_UPDATE", "focus")
+    elseif Events and Events.UnregisterAllEventsFor then
+        -- If your Events wrapper is module-scoped, this is usually the cleanest option
+        Events:UnregisterAllEventsFor(self)
+    end
+
+    -- Clear runtime state so re-enable starts clean
+    self.castInfo = nil
+    self.focusGUID = nil
+    self.focusName = nil
+
+    -- Hide UI + ensure it renders "empty" if it gets shown briefly
+    if self.frame then
+        self.frame:Hide()
+    end
+
+    -- Optional mover cleanup (only if your movers system expects removal on disable)
+    if BS and BS.Movers and BS.Movers.Unregister and self.frame then
+        BS.Movers:Unregister(self.frame, self.name)
+    end
+end
+
 -------------------------------------------------
 -- Events (BS dispatcher)
 -------------------------------------------------
