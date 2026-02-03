@@ -34,6 +34,8 @@ local defaults         = {
   font     = "Fonts\\FRIZQT__.TTF"
 }
 
+Shimmer.defaults       = defaults
+
 -------------------------------------------------
 -- UI
 -------------------------------------------------
