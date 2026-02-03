@@ -151,6 +151,32 @@ function Shimmer:OnInit()
   Events:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 end
 
+function Shimmer:OnDisabled()
+  self.db = BS.DB:EnsureDB(self.name, defaults)
+
+  self.enabled = false
+  if self.db then self.db.enabled = false end
+
+  if BS.Tickers and BS.Tickers.Stop then
+    BS.Tickers:Stop(self)
+  elseif self.StopTicker then
+    self:StopTicker()
+  end
+
+  if Events and Events.UnregisterEvent then
+    Events:UnregisterEvent("SPELL_UPDATE_COOLDOWN")
+  elseif Events and Events.UnregisterAllEventsFor then
+    Events:UnregisterAllEventsFor(self)
+  end
+
+  if self.frame then
+    self.frame:Hide()
+  end
+
+  if BS.Movers and BS.Movers.Unregister and self.frame then
+    BS.Movers:Unregister(self.frame, self.name)
+  end
+end
 -------------------------------------------------
 -- Events
 -------------------------------------------------

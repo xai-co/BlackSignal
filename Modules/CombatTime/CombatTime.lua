@@ -241,6 +241,47 @@ function CombatTime:OnInit()
     Events:RegisterEvent("PLAYER_ENTERING_WORLD")
 end
 
+function CombatTime:OnDisabled()
+    -- Refresh db, force disable, persist state
+    self.db = BS.DB:EnsureDB(self.name, defaults)
+    self.enabled = false
+    if self.db then self.db.enabled = false end
+
+    -- Reset runtime combat state
+    self.inCombat = false
+    self.combatStart = nil
+
+    -- Stop ticker / updates
+    if BS.Tickers and BS.Tickers.Stop then
+        BS.Tickers:Stop(self)
+    elseif self.StopTicker then
+        self:StopTicker()
+    end
+
+    -- Unregister events registered in OnInit
+    if Events and Events.UnregisterEvent then
+        Events:UnregisterEvent("PLAYER_REGEN_DISABLED")
+        Events:UnregisterEvent("PLAYER_REGEN_ENABLED")
+        Events:UnregisterEvent("PLAYER_ENTERING_WORLD")
+    elseif Events and Events.UnregisterAllEventsFor then
+        Events:UnregisterAllEventsFor(self)
+    end
+
+    -- Hide UI
+    if self.textFS then
+        self.textFS:SetText("00:00")
+    end
+    if self.frame then
+        self.frame:Hide()
+    end
+
+    -- Optional mover cleanup (keep if your movers system expects it)
+    if BS.Movers and BS.Movers.Unregister and self.frame then
+        BS.Movers:Unregister(self.frame, self.name)
+    end
+end
+
+
 -------------------------------------------------
 -- Events
 -------------------------------------------------

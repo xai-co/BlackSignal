@@ -1,24 +1,27 @@
 -- LeftPanel.lua
 -- @module LeftPanel
 -- @alias LeftPanel
-local _, BS = ...
+local _, BS      = ...
 
-BS.LeftPanel    = BS.LeftPanel or {}
-local LeftPanel = BS.LeftPanel
+BS.LeftPanel     = BS.LeftPanel or {}
+local LeftPanel  = BS.LeftPanel
 
-local WIDTH         = 235 -- Panel width
-local BUTTON_H      = 40  -- Button height
-local BUTTON_GAP    = 6   -- Gap between buttons
-local BUTTON_PAD    = 5   -- Button padding
+local WIDTH      = 235    -- Panel width
+local BUTTON_H   = 40     -- Button height
+local BUTTON_GAP = 6      -- Gap between buttons
+local BUTTON_PAD = 5      -- Button padding
 
 
 --- Get an ordered list of modules from the modules table
+--- Groups modules with v.isQOLModule == true into a single virtual entry.
 --- @local
 --- @param modulesTable table The table containing module data
 --- @return table table The ordered list of modules
 local function OrderedModules(modulesTable)
-    local list = {}
-    if type(modulesTable) ~= "table" then return list end
+    local normal = {}
+    local qol    = {}
+
+    if type(modulesTable) ~= "table" then return normal end
 
     for k, v in pairs(modulesTable) do
         if type(v) == "table" then
@@ -27,18 +30,34 @@ local function OrderedModules(modulesTable)
             if v.hidden then isHidden = true end
 
             if not isHidden then
-                if v.name then
-                    table.insert(list, v)
-                elseif type(k) == "string" then
+                if not v.name and type(k) == "string" then
                     v.name = k
-                    table.insert(list, v)
+                end
+
+                if v.name then
+                    if v.isQOLModule == true then
+                        table.insert(qol, v)
+                    else
+                        table.insert(normal, v)
+                    end
                 end
             end
         end
     end
 
-    table.sort(list, function(a, b) return (a.name or "") < (b.name or "") end)
-    return list
+    table.sort(normal, function(a, b) return (a.name or "") < (b.name or "") end)
+    table.sort(qol, function(a, b) return (a.label or a.name or "") < (b.label or b.name or "") end)
+
+    if #qol > 0 then
+        table.insert(normal, 1, {
+            name       = "__QOL__",
+            label      = "QoL",
+            isQOLGroup = true,
+            children   = qol,
+        })
+    end
+
+    return normal
 end
 
 
@@ -60,8 +79,10 @@ function LeftPanel:Create(parent, onClick)
     local y = -8
 
     for _, m in ipairs(panel._bsModules) do
-        m.db = m.db or BS.DB:EnsureDB(m.name, m.defaults or { enabled = true })
-        if m.enabled == nil then m.enabled = m.db.enabled end
+        if not m.isQOLGroup then
+            m.db = m.db or BS.DB:EnsureDB(m.name, m.defaults or { enabled = true })
+            if m.enabled == nil then m.enabled = m.db.enabled end
+        end
 
         local btn = BS.Button:CreateNav(nil, panel, 1, BUTTON_H, m.label, "TOPLEFT", panel, "TOPLEFT", BUTTON_PAD, y)
         btn:SetPoint("TOPLEFT", panel, "TOPLEFT", BUTTON_PAD, y)

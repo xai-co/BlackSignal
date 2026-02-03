@@ -2,7 +2,7 @@
 -- @module MainPanel
 -- @alias MainPanel
 
-local _, BS = ...
+local addonName, BS = ...
 BS.MainPanel = BS.MainPanel or {}
 
 local MainPanel = BS.MainPanel
@@ -124,6 +124,10 @@ function MainPanel:CreateMenu()
     local leftPanel = BS.LeftPanel:Create(ConfigFrame, function(module)
         onSelectModule(leftPanel, module)
     end)
+
+    local version      = C_AddOns.GetAddOnMetadata(addonName, "Version")
+    local versionText  = UI:CreateText(ConfigFrame, version, "CENTER", leftPanel, "BOTTOM", 0, -5, "GameFontNormalSmall")
+    versionText:SetTextColor(unpack(BS.Colors.Text.normal))
 
     --- Right panel
     BS.RightPanel:Create(ConfigFrame, leftPanel)

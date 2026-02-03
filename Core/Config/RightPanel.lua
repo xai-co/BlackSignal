@@ -187,6 +187,10 @@ local function SetModuleEnabled(module, enabled)
         module:OnInit()
     end
 
+    if not enabled and module.OnDisabled then
+        module:OnDisabled()
+    end
+
     if module.frame then
         module.frame:SetShown(enabled)
         if enabled then
@@ -202,7 +206,8 @@ end
 -- ------------------------------------------------
 -- Content factory
 -- ------------------------------------------------
-local function CreateModuleContent(parent, module)
+local function CreateModuleContent(parent, module, opts)
+    opts = opts or {}
     local defaults = module.defaults or { enabled = true }
 
     module.db = module.db or BS.DB:EnsureDB(module.name, defaults)
@@ -214,7 +219,11 @@ local function CreateModuleContent(parent, module)
     if canFont then EnsureFontDefaults(module, defaults) end
 
     local f = CreateFrame("Frame", nil, parent)
-    f:SetAllPoints()
+
+    if not opts.stack then
+        f:SetAllPoints()
+    end
+
     f:Hide()
 
     -- Title
@@ -277,7 +286,6 @@ local function CreateModuleContent(parent, module)
         if module.db[dbKey] == nil then return end
 
         local lbl = UI:CreateText(f, label, "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0, -14, "GameFontHighlight")
-        -- local cb  = BS.CheckButton:Create("Config_" .. module.name .. "_" .. dbKey, f, "LEFT", lbl, "RIGHT", 10, 0)
         local cb = BS.CheckButton:Create("Config_" .. module.name .. "_" .. dbKey, f, 20, 20, "", "LEFT", lbl, "RIGHT",
             10, 0)
 
@@ -382,7 +390,7 @@ local function CreateModuleContent(parent, module)
                 if v < 8 then v = 8 end
                 if v > 128 then v = 128 end
                 module.db.iconSize = v
-                ApplyModuleExtra(module) -- ApplyOptions() si existe
+                ApplyModuleExtra(module)
             end
             self:ClearFocus()
         end)
@@ -391,8 +399,10 @@ local function CreateModuleContent(parent, module)
     end
 
     if module.db.showOptions == true then
-        local optTitle = UI:CreateText(f, "Visibility conditions", "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0, -28, "GameFontHighlight")
-        local sep = UI:CreateSeparator(f, 520, "TOPLEFT", optTitle, "BOTTOMLEFT", 0, -10, { color = BS.Colors.Brand.primary, alpha = 1, thickness = 1 })
+        local optTitle = UI:CreateText(f, "Visibility conditions", "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0, -28,
+            "GameFontHighlight")
+        local sep = UI:CreateSeparator(f, 520, "TOPLEFT", optTitle, "BOTTOMLEFT", 0, -10,
+            { color = BS.Colors.Brand.primary, alpha = 1, thickness = 1 })
         lastAnchor = sep
     end
     AddBoolOption("showOnlyInGroup", "Show only in group:")
@@ -402,77 +412,153 @@ local function CreateModuleContent(parent, module)
     AddBoolOption("showOnlyOnReadyCheck", "Show Only on ready check:")
 
 
-    -- Reset (usa defaults reales si existen)
-    local reset = BS.Button:Create("ResetButton", f, 140, 24, "Reset Defaults", "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0,
-        -18)
-    reset:SetScript("OnClick", function()
-        local d = module.defaults or { enabled = true }
+    if not opts.stack then 
+        local reset = BS.Button:Create("ResetButton", f, 140, 24, "Reset Defaults", "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0,
+            -18)
+        reset:SetScript("OnClick", function()
+            local d = module.defaults or { enabled = true }
 
-        -- enabled
-        module.db.enabled = (d.enabled ~= false)
-        module.enabled = module.db.enabled
-        enableCB:SetChecked(module.enabled)
+            -- enabled
+            module.db.enabled = (d.enabled ~= false)
+            module.enabled = module.db.enabled
+            enableCB:SetChecked(module.enabled)
 
-        -- font
-        if canFont then
-            module.db.fontSize = d.fontSize or module.db.fontSize or 20
-            module.db.font = NormalizeFontPath(d.font) or module.db.font or "Fonts\\FRIZQT__.TTF"
-            if d.fontFlags ~= nil then module.db.fontFlags = d.fontFlags end
-            if fontEdit then fontEdit:SetText(tostring(module.db.fontSize)) end
+            -- font
+            if canFont then
+                module.db.fontSize = d.fontSize or module.db.fontSize or 20
+                module.db.font = NormalizeFontPath(d.font) or module.db.font or "Fonts\\FRIZQT__.TTF"
+                if d.fontFlags ~= nil then module.db.fontFlags = d.fontFlags end
+                if fontEdit then fontEdit:SetText(tostring(module.db.fontSize)) end
 
-            fonts = GetAvailableFonts()
-            if fontDD then SetDropdownSelectionByValue(fontDD, module.db.font, fonts) end
+                fonts = GetAvailableFonts()
+                if fontDD then SetDropdownSelectionByValue(fontDD, module.db.font, fonts) end
 
-            ApplyModuleFont(module)
-        end
+                ApplyModuleFont(module)
+            end
 
-        -- text
-        if canText then
-            module.db.text = d.text or ""
-            if textEdit then textEdit:SetText(tostring(module.db.text)) end
-            ApplyModuleText(module)
-        end
+            -- text
+            if canText then
+                module.db.text = d.text or ""
+                if textEdit then textEdit:SetText(tostring(module.db.text)) end
+                ApplyModuleText(module)
+            end
 
-        -- extras típicos
-        if d.updateInterval ~= nil then module.db.updateInterval = d.updateInterval end
-        if d.size ~= nil then module.db.size = d.size end
-        if d.iconSize ~= nil then module.db.iconSize = d.iconSize end
-        if d.showOnlyInGroup ~= nil then module.db.showOnlyInGroup = d.showOnlyInGroup end
-        if d.showOnlyInInstance ~= nil then module.db.showOnlyInInstance = d.showOnlyInInstance end
-        if d.showOnlyPlayerClassBuff ~= nil then module.db.showOnlyPlayerClassBuff = d.showOnlyPlayerClassBuff end
-        if d.showOnlyPlayerMissing ~= nil then module.db.showOnlyPlayerMissing = d.showOnlyPlayerMissing end
+            if d.size ~= nil then module.db.size = d.size end
+            if d.iconSize ~= nil then module.db.iconSize = d.iconSize end
+            if d.showOnlyInGroup ~= nil then module.db.showOnlyInGroup = d.showOnlyInGroup end
+            if d.showOnlyInInstance ~= nil then module.db.showOnlyInInstance = d.showOnlyInInstance end
+            if d.showOnlyPlayerClassBuff ~= nil then module.db.showOnlyPlayerClassBuff = d.showOnlyPlayerClassBuff end
+            if d.showOnlyPlayerMissing ~= nil then module.db.showOnlyPlayerMissing = d.showOnlyPlayerMissing end
 
-        if d.showOnlyOnReadyCheck ~= nil then module.db.showOnlyOnReadyCheck = d.showOnlyOnReadyCheck end
-        if d.readyCheckDuration ~= nil then module.db.readyCheckDuration = d.readyCheckDuration end
+            if d.showOnlyOnReadyCheck ~= nil then module.db.showOnlyOnReadyCheck = d.showOnlyOnReadyCheck end
+            if d.readyCheckDuration ~= nil then module.db.readyCheckDuration = d.readyCheckDuration end
 
-        if d.showExpirationGlow ~= nil then module.db.showExpirationGlow = d.showExpirationGlow end
-        if d.expirationThreshold ~= nil then module.db.expirationThreshold = d.expirationThreshold end
+            if d.showExpirationGlow ~= nil then module.db.showExpirationGlow = d.showExpirationGlow end
+            if d.expirationThreshold ~= nil then module.db.expirationThreshold = d.expirationThreshold end
 
-        if d.thickness ~= nil then
-            module.db.thickness = d.thickness
-            if f._bsThicknessDD and f._bsThicknessDD.Refresh then f._bsThicknessDD:Refresh() end
-        end
+            if d.thickness ~= nil then
+                module.db.thickness = d.thickness
+                if f._bsThicknessDD and f._bsThicknessDD.Refresh then f._bsThicknessDD:Refresh() end
+            end
 
-        if module.frame then module.frame:SetShown(module.enabled ~= false) end
-        if module.StopTicker then module:StopTicker() end
-        if module.StartTicker and module.enabled ~= false then module:StartTicker() end
+            if module.frame then module.frame:SetShown(module.enabled ~= false) end
+            if module.StopTicker then module:StopTicker() end
+            if module.StartTicker and module.enabled ~= false then module:StartTicker() end
 
-        ApplyModuleExtra(module)
-    end)
+            ApplyModuleExtra(module)
+        end)
 
-    UI:CreateText(
-        f,
-        "Tip: Press Enter to apply changes.",
-        "TOPLEFT",
-        reset,
-        "BOTTOMLEFT",
-        0,
-        -14,
-        "GameFontDisableSmall"
-    )
+        UI:CreateText(
+            f,
+            "Tip: Press Enter to apply changes.",
+            "TOPLEFT",
+            reset,
+            "BOTTOMLEFT",
+            0,
+            -14,
+            "GameFontDisableSmall"
+        )
+    end
+
+    f._bsLastAnchor = lastAnchor
+    f._bsModuleName = module.name
+
+    if opts.stack then
+        f:SetHeight(260) -- fallback
+    end
 
     return f
 end
+
+local function CreateQOLGroupContent(parent, groupModule)
+    local f = CreateFrame("Frame", nil, parent)
+    f:SetAllPoints()
+    f:Hide()
+
+    -- Title
+    local title = UI:CreateText(
+        f,
+        "Quality of Life",
+        "TOPLEFT",
+        f,
+        "TOPLEFT",
+        0,
+        0,
+        "GameFontNormalLarge"
+    )
+    title:SetTextColor(1, 1, 1, 1)
+
+    f._qol = {
+        frames   = {},
+        children = groupModule.children or {},
+    }
+
+    local last = title
+    local FIRST_Y_GAP = -20  -- espacio desde el título al primer bloque
+    local BLOCK_GAP   = 0    -- espacio después del separador hacia el siguiente bloque
+    local FALLBACK_H  = 120  -- por si no podemos medir (raro)
+
+    local function ComputeBlockHeight(block)
+        local top = block:GetTop()
+        local lastAnchor = block._bsLastAnchor
+        local bottom = lastAnchor and lastAnchor.GetBottom and lastAnchor:GetBottom() or nil
+
+        if top and bottom and top > bottom then
+            local h = (top - bottom) + 26
+            if h < 120 then h = 80 end
+            block:SetHeight(h)
+            return h
+        end
+
+        block:SetHeight(FALLBACK_H)
+        return FALLBACK_H
+    end
+
+    for i, m in ipairs(f._qol.children) do
+        local block = CreateModuleContent(f, m, { stack = true })
+        block:Show()
+        block:ClearAllPoints()
+
+        if i == 1 then
+            block:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, FIRST_Y_GAP)
+            block:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 0)
+        else
+            block:SetPoint("TOPLEFT", last, "BOTTOMLEFT", 0, BLOCK_GAP)
+            block:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 0)
+        end
+
+        ComputeBlockHeight(block)
+
+        f._qol.frames[m.name] = block
+
+        last = block
+    end
+
+    return f
+end
+
+
+
 
 -- ------------------------------------------------
 -- RightPanel API
@@ -503,7 +589,22 @@ function RightPanel:ShowModule(module)
         if cf and cf.Hide then cf:Hide() end
     end
 
-    -- create on demand
+    -- QOL virtual group screen
+    if module.isQOLGroup then
+        local content = self.contentFrames[module.name]
+        if not content then
+            content = CreateQOLGroupContent(self.panel, module)
+            content:SetPoint("TOPLEFT", self.panel, "TOPLEFT", 16, -16)
+            content:SetPoint("BOTTOMRIGHT", self.panel, "BOTTOMRIGHT", -16, 16)
+            self.contentFrames[module.name] = content
+        end
+
+        content:Show()
+        self.selectedModule = module.name
+        return
+    end
+
+    -- regular module content (existing behavior)
     local content = self.contentFrames[module.name]
     if not content then
         content = CreateModuleContent(self.panel, module)

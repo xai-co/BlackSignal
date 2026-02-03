@@ -7,10 +7,11 @@ local API   = BS.API
 local DB    = BS.DB
 
 local TeleportButtons = {
-  name = "BS_TB",
-  label = "Teleport Buttons",
-  enabled = true,
-  events = {},
+  name          = "BS_TB",
+  label         = "Teleport Buttons",
+  isQOLModule   = true,
+  enabled       = true,
+  events        = {},
 }
 
 API:Register(TeleportButtons)
@@ -265,6 +266,16 @@ function TeleportButtons:OnInit()
   end
 
   RefreshVisibility(self)
+end
+
+function TeleportButtons:OnDisabled()
+  self.db = DB:EnsureDB(self.name, { enabled = true })
+  self.enabled = (self.db.enabled ~= false)
+
+  if not self.enabled then
+    if self.container then self.container:Hide() end
+    return
+  end
 end
 
 function TeleportButtons:Apply()
