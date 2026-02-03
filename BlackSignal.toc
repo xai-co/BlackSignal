@@ -1,7 +1,7 @@
 ## Title: |cff7f3fbfBlackSignal|r
 ## Notes: User Quality of Life Improvements
 ## Author: Xaico, Gwydeon
-## Version: 1.0.5
+## Version: @project-version@
 ## X-Wago-ID: QN53BPKB
 ## X-Curse-Project-ID: 1452012
 ## Interface: 120000, 120001
