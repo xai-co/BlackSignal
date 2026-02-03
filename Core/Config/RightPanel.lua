@@ -130,8 +130,10 @@ local function SupportsFont(defaults)
 end
 
 local function SupportsTextField(module, defaults)
-    if UTILS:HasKey(defaults, "text") then return true end
-    if module and module.db and UTILS:HasKey(module.db, "text") then return true end
+    if UTILS:HasKey(defaults, "text") then
+        return true
+    end
+
     return false
 end
 
@@ -181,7 +183,11 @@ local function SetModuleEnabled(module, enabled)
     enabled = enabled and true or false
 
     module.enabled = enabled
-    if module.db then module.db.enabled = enabled end
+    if module.db then
+        module.db.enabled = enabled
+    else
+        return
+    end
 
     if enabled and module.OnInit then
         module:OnInit()
@@ -412,8 +418,9 @@ local function CreateModuleContent(parent, module, opts)
     AddBoolOption("showOnlyOnReadyCheck", "Show Only on ready check:")
 
 
-    if not opts.stack then 
-        local reset = BS.Button:Create("ResetButton", f, 140, 24, "Reset Defaults", "TOPLEFT", lastAnchor, "BOTTOMLEFT", 0,
+    if not opts.stack then
+        local reset = BS.Button:Create("ResetButton", f, 140, 24, "Reset Defaults", "TOPLEFT", lastAnchor, "BOTTOMLEFT",
+            0,
             -18)
         reset:SetScript("OnClick", function()
             local d = module.defaults or { enabled = true }
@@ -508,15 +515,15 @@ local function CreateQOLGroupContent(parent, groupModule)
     )
     title:SetTextColor(1, 1, 1, 1)
 
-    f._qol = {
+    f._qol            = {
         frames   = {},
         children = groupModule.children or {},
     }
 
-    local last = title
-    local FIRST_Y_GAP = -20  -- espacio desde el título al primer bloque
-    local BLOCK_GAP   = 0    -- espacio después del separador hacia el siguiente bloque
-    local FALLBACK_H  = 120  -- por si no podemos medir (raro)
+    local last        = title
+    local FIRST_Y_GAP = -20 -- espacio desde el título al primer bloque
+    local BLOCK_GAP   = 0   -- espacio después del separador hacia el siguiente bloque
+    local FALLBACK_H  = 120 -- por si no podemos medir (raro)
 
     local function ComputeBlockHeight(block)
         local top = block:GetTop()
